@@ -5,7 +5,14 @@
 import { test as base, expect } from '@playwright/test';
 
 /** Every page in the build. */
-export const BUILT_PAGES = ['/', '/ko', '/request-sent', '/request-not-sent'];
+export const BUILT_PAGES = [
+  '/',
+  '/ko',
+  '/request-sent',
+  '/request-not-sent',
+  '/ko/request-sent',
+  '/ko/request-not-sent',
+];
 
 interface Violation {
   directive: string;

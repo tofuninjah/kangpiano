@@ -1,7 +1,15 @@
 // Server-side validation for the contact form. Field names and limits come
 // from ./contact so the form markup and this schema can't drift apart.
+// Errors are codes (FieldErrorCode), worded per language in FIELD_ERRORS.
 import { z } from 'zod';
-import { CONTACT_LIMITS, townOptions } from './contact';
+import {
+  CONTACT_LIMITS,
+  FIELD_ERRORS,
+  LOCALE_FIELD,
+  townOptions,
+  type FieldErrorCode,
+} from './contact';
+import { DEFAULT_LOCALE, isLocale, type Locale } from './i18n';
 
 /** The fields the endpoint accepts. Anything else in the body is ignored. */
 export const CONTACT_FIELDS = [
@@ -47,23 +55,28 @@ export function isPhone(value: string): boolean {
   return digits >= 7 && digits <= 15;
 }
 
+const code = (value: FieldErrorCode) => value;
+
 const text = (max: number, clean: (value: string) => string) =>
-  z.string().transform(clean).pipe(z.string().max(max, 'That’s too long.'));
+  z
+    .string()
+    .transform(clean)
+    .pipe(z.string().max(max, code('tooLong')));
 
 export const contactSchema = z.object({
   name: text(CONTACT_LIMITS.name, singleLine).pipe(
-    z.string().min(1, 'Please enter your name.')
+    z.string().min(1, code('nameRequired'))
   ),
   contact: text(CONTACT_LIMITS.contact, singleLine)
-    .pipe(z.string().min(1, 'Please enter a phone number or email.'))
+    .pipe(z.string().min(1, code('contactRequired')))
     .refine(
       (value) => isEmail(value) || isPhone(value),
-      'Please enter a phone number or an email address.'
+      code('contactInvalid')
     ),
   age: text(CONTACT_LIMITS.age, singleLine),
   town: text(100, singleLine).refine(
     (value) => townOptions().includes(value),
-    'Please choose a town.'
+    code('townInvalid')
   ),
   message: text(CONTACT_LIMITS.message, multiLine),
 });
@@ -72,13 +85,33 @@ export type ContactRequest = z.infer<typeof contactSchema>;
 
 export type ContactErrors = Partial<Record<ContactField, string>>;
 
+interface FormValues {
+  get(name: string): FormDataEntryValue | null;
+  getAll(name: string): FormDataEntryValue[];
+}
+
+/**
+ * The page's language from the hidden locale field: exactly one value, and
+ * one of the known locales. Anything else is English rather than an error,
+ * so a mangled field never costs Hyejeong a real request. The value only
+ * ever picks from fixed lists; it's never echoed into a URL, page or email.
+ */
+export function parseLocale(form: FormValues): Locale {
+  const values = form.getAll(LOCALE_FIELD);
+  const [value] = values;
+  return values.length === 1 && typeof value === 'string' && isLocale(value)
+    ? value
+    : DEFAULT_LOCALE;
+}
+
 /**
  * Validates the allowlisted fields only. Missing fields count as empty, so
- * the required-field messages apply.
+ * the required-field messages apply. Errors are worded in `locale`.
  */
-export function parseContact(form: {
-  get(name: string): FormDataEntryValue | null;
-}): { ok: true; data: ContactRequest } | { ok: false; errors: ContactErrors } {
+export function parseContact(
+  form: FormValues,
+  locale: Locale = DEFAULT_LOCALE
+): { ok: true; data: ContactRequest } | { ok: false; errors: ContactErrors } {
   const input = Object.fromEntries(
     CONTACT_FIELDS.map((field) => {
       const value = form.get(field);
@@ -91,7 +124,10 @@ export function parseContact(form: {
   const errors: ContactErrors = {};
   for (const issue of result.error.issues) {
     const field = issue.path[0] as ContactField;
-    errors[field] ??= issue.message;
+    // Every rule above reports one of the codes; the guard keeps a code
+    // from ever reaching the visitor if a new rule forgets to.
+    const message = FIELD_ERRORS[locale][issue.message as FieldErrorCode];
+    if (message) errors[field] ??= message;
   }
   return { ok: false, errors };
 }

@@ -110,10 +110,12 @@ const lessons: readonly Lesson[] = [
   },
 ];
 
+const siteName = '강혜정 피아노·바이올린';
+
 export const ko = {
   meta: {
     title: '하와이 오아후 피아노·바이올린 레슨 · 강혜정 선생님',
-    siteName: '강혜정 피아노·바이올린',
+    siteName,
     description: `하와이 오아후 1:1 피아노·바이올린 레슨. ${teachingSummary()}. 목원대 출신 한인 선생님, 한국어·영어 레슨 가능.`,
   },
   skipLink: '본문 바로가기',
@@ -190,5 +192,38 @@ export const ko = {
     callNow: '지금 전화하기',
     callNowLabel: (phone) => `지금 전화하기, ${phone}`,
     request: '레슨 신청',
+  },
+  contact: {
+    eyebrow: '첫 레슨 신청',
+    heading: { lead: '첫 레슨 일정을', emphasis: '함께 정해요.' },
+    intro: '전화가 가장 빠릅니다. 아래에 간단히 남겨 주시면 연락드리겠습니다.',
+    callLabel: '전화',
+    name: '이름',
+    contact: '연락처 (전화번호 또는 이메일)',
+    age: '학생 나이',
+    ageHint: '예: 7세, 성인',
+    town: '지역',
+    townPlaceholder: '지역을 선택해 주세요',
+    otherTown: '기타 지역',
+    message: '미리 알려 주실 내용',
+    optional: '선택',
+    honeypot: '이 칸은 비워 두세요',
+    submit: '신청하기',
+    privacyNote: '입력하신 정보는 연락드릴 때만 사용합니다.',
+  },
+  formResult: {
+    sent: {
+      title: `신청 완료 · ${siteName}`,
+      eyebrow: '신청 완료',
+      heading: '감사합니다. 신청이 접수되었습니다.',
+      body: '곧 연락드리겠습니다. 지금 바로 이야기 나누시려면 전화 주세요.',
+    },
+    notSent: {
+      title: `전송 실패 · ${siteName}`,
+      eyebrow: '전송되지 않음',
+      heading: '죄송합니다. 신청이 전송되지 않았습니다.',
+      body: '돌아가서 입력 내용을 확인하시거나, 전화로 연락 주세요.',
+    },
+    back: '홈으로 돌아가기',
   },
 } satisfies PageCopy;

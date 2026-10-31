@@ -1,14 +1,18 @@
 ---
 // Shared body for the pages a no-JavaScript form post lands on.
+import { copy } from '../data/copy';
 import { site } from '../data/site';
+import { homeSectionHref, type Locale } from '../lib/i18n';
 
 interface Props {
+  locale: Locale;
   eyebrow: string;
   heading: string;
   body: string;
 }
 
-const { eyebrow, heading, body } = Astro.props;
+const { locale, eyebrow, heading, body } = Astro.props;
+const text = copy[locale];
 ---
 
 <section
@@ -28,13 +32,13 @@ const { eyebrow, heading, body } = Astro.props;
       href={site.phone.href}
       class="rounded-full bg-quink px-[1.875rem] py-[1.125rem] text-ui font-semibold text-paper transition-colors hover:bg-ink"
     >
-      Call {site.phone.display}
+      {text.callNumber(site.phone.display)}
     </a>
     <a
-      href="/#contact"
+      href={homeSectionHref('contact', locale)}
       class="border-b-[1.5px] border-quink pb-1 text-ui font-semibold text-quink"
     >
-      Back to the site
+      {text.formResult.back}
     </a>
   </div>
 </section>

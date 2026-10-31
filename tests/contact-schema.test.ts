@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CONTACT_LIMITS, OTHER_TOWN } from '../src/lib/contact';
-import { isPhone, parseContact } from '../src/lib/contact-schema';
+import { CONTACT_LIMITS, FIELD_ERRORS, OTHER_TOWN } from '../src/lib/contact';
+import { isPhone, parseContact, parseLocale } from '../src/lib/contact-schema';
 
 const valid = {
   name: 'Test Parent',
@@ -127,5 +127,53 @@ describe('isPhone', () => {
     expect(isPhone('371-0708')).toBe(true);
     expect(isPhone('371-070')).toBe(false);
     expect(isPhone('808-371-0708 ext 2')).toBe(false);
+  });
+});
+
+describe('parseLocale', () => {
+  it('reads exactly one known locale', () => {
+    expect(parseLocale(form({ locale: 'ko' }))).toBe('ko');
+    expect(parseLocale(form({ locale: 'en' }))).toBe('en');
+  });
+
+  it('falls back to English for anything else', () => {
+    expect(parseLocale(form({}))).toBe('en');
+    for (const locale of ['KO', ' ko', 'ko-KR', 'fr', '', '/ko', '__proto__']) {
+      expect(parseLocale(form({ locale })), locale).toBe('en');
+    }
+    const twice = form({ locale: 'ko' });
+    twice.append('locale', 'ko');
+    expect(parseLocale(twice)).toBe('en');
+  });
+});
+
+describe('parseContact in Korean', () => {
+  it('words every field error in Korean', () => {
+    const empty = parseContact(form({}), 'ko');
+    expect(empty).toEqual({
+      ok: false,
+      errors: {
+        name: FIELD_ERRORS.ko.nameRequired,
+        contact: FIELD_ERRORS.ko.contactRequired,
+        town: FIELD_ERRORS.ko.townInvalid,
+      },
+    });
+    const wrong = parseContact(
+      form({ ...valid, contact: 'hello', name: 'x'.repeat(101) }),
+      'ko'
+    );
+    expect(wrong).toEqual({
+      ok: false,
+      errors: {
+        name: FIELD_ERRORS.ko.tooLong,
+        contact: FIELD_ERRORS.ko.contactInvalid,
+      },
+    });
+  });
+
+  it('has a message for every error code in every language', () => {
+    expect(Object.keys(FIELD_ERRORS.ko).sort()).toEqual(
+      Object.keys(FIELD_ERRORS.en).sort()
+    );
   });
 });

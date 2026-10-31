@@ -4,18 +4,21 @@
 interface Props {
   id: string;
   label: string;
-  optional?: boolean;
+  /** For an optional field, the word shown in brackets after the label. */
+  optional?: string;
   hint?: string;
   class?: string;
 }
 
-const { id, label, optional = false, hint, class: className } = Astro.props;
+const { id, label, optional, hint, class: className } = Astro.props;
 ---
 
 <div class:list={['flex flex-col gap-2', className]}>
   <label for={id} class="text-small font-semibold text-ink">
     {label}
-    {optional && <span class="font-normal text-pencil"> (optional)</span>}
+    {optional && (
+      <span class="font-normal text-pencil">{` (${optional})`}</span>
+    )}
   </label>
   <slot />
   {hint && (

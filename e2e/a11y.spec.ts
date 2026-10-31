@@ -39,6 +39,24 @@ test('the form has no axe violations while showing errors', async ({
   expect(await violations(page)).toEqual([]);
 });
 
+test('the Korean form has no axe violations while showing errors', async ({
+  page,
+}) => {
+  const ko = copy.ko.contact;
+  await serveContact(page);
+  await page.goto('/ko#contact');
+  await fillRequest(page, { contact: 'not sure' }, 'ko');
+  await contactForm(page, 'ko')
+    .getByRole('button', { name: ko.submit })
+    .click();
+  await expect(contactForm(page, 'ko').getByLabel(ko.contact)).toHaveAttribute(
+    'aria-invalid',
+    'true'
+  );
+
+  expect(await violations(page)).toEqual([]);
+});
+
 test('the open phone menu has no axe violations', async ({
   page,
   isMobile,

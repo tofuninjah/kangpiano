@@ -29,7 +29,16 @@ export const LOCALE_DETAILS: Record<Locale, LocaleDetails> = {
  * these get hreflang tags; the language link on any other page goes to the
  * other language's home page.
  */
-export const TRANSLATED_PATHS: readonly string[] = ['/'];
+export const TRANSLATED_PATHS: readonly string[] = [
+  '/',
+  '/request-sent',
+  '/request-not-sent',
+];
+
+/** Narrows an untrusted string, such as a form field, to a known locale. */
+export function isLocale(value: string): value is Locale {
+  return (LOCALES as readonly string[]).includes(value);
+}
 
 /** '/' in Korean is '/ko'; '/request-sent' is '/ko/request-sent'. */
 export function localizePath(path: string, locale: Locale): string {

@@ -3,6 +3,7 @@
 // text with typos fixed and US spelling; the paragraph on test scores and
 // Alberta high-school credits was dropped as unsourced and not relevant to
 // Hawaiʻi.
+import { OTHER_TOWN } from '../../lib/contact';
 import { formatList } from '../../lib/format';
 import { inHomeTowns, teachingSentence } from '../../lib/schedule';
 import { site } from '../site';
@@ -138,5 +139,39 @@ export const en = {
     callNow: 'Call now',
     callNowLabel: (phone) => `Call now, ${phone}`,
     request: 'Request a lesson',
+  },
+  contact: {
+    eyebrow: 'Request a first lesson',
+    heading: { lead: 'Let’s find your', emphasis: 'first lesson.' },
+    intro:
+      'Calling is quickest. If it’s easier, send a short note and I’ll get back to you.',
+    callLabel: 'Call',
+    name: 'Your name',
+    contact: 'Phone or email',
+    age: 'Student’s age',
+    ageHint: 'For example, 7 or adult',
+    town: 'Town',
+    townPlaceholder: 'Choose a town',
+    otherTown: OTHER_TOWN,
+    message: 'Anything I should know?',
+    optional: 'optional',
+    honeypot: 'Leave this empty',
+    submit: 'Send request',
+    privacyNote: 'Used only to reply to you.',
+  },
+  formResult: {
+    sent: {
+      title: `Request sent · ${site.title}`,
+      eyebrow: 'Request sent',
+      heading: 'Thank you. Your request is on its way.',
+      body: 'I’ll get back to you soon. If you’d rather talk now, calling is quickest.',
+    },
+    notSent: {
+      title: `Request not sent · ${site.title}`,
+      eyebrow: 'Request not sent',
+      heading: 'Sorry, your request didn’t go through.',
+      body: 'Please go back and check the form, or give me a call instead.',
+    },
+    back: 'Back to the site',
   },
 } satisfies PageCopy;

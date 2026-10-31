@@ -62,7 +62,7 @@ describe('alternatePaths', () => {
   });
 
   it('is empty for a page that exists in one language only', () => {
-    expect(alternatePaths('/request-sent')).toEqual([]);
+    expect(alternatePaths('/english-only')).toEqual([]);
   });
 });
 
@@ -73,7 +73,7 @@ describe('languageLinkPath', () => {
   });
 
   it('falls back to the other language’s home page', () => {
-    expect(languageLinkPath('/request-sent', 'ko')).toBe('/ko');
+    expect(languageLinkPath('/english-only', 'ko')).toBe('/ko');
   });
 });
 

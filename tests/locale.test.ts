@@ -152,29 +152,38 @@ describe('language link', () => {
     ]);
   });
 
-  it('goes to the other language’s home page from an untranslated page', () => {
+  it('goes between the two versions of a result page', () => {
     expect(languageLinks(html['/request-sent']!)).toEqual([
-      { href: '/ko', lang: 'ko', hreflang: 'ko', text: '한국어' },
+      { href: '/ko/request-sent', lang: 'ko', hreflang: 'ko', text: '한국어' },
+    ]);
+    expect(languageLinks(html['/ko/request-not-sent']!)).toEqual([
+      {
+        href: '/request-not-sent',
+        lang: 'en',
+        hreflang: 'en',
+        text: 'English',
+      },
     ]);
   });
 });
 
-describe('Korean home page', () => {
-  // Latin text the Korean page is allowed to show: the English town names
+describe('Korean pages', () => {
+  // Latin text a Korean page is allowed to show: the English town names
   // beside the Hangul in the schedule, and the link to the English page.
   const ALLOWED = [...allTowns(), LOCALE_DETAILS.en.name];
+  const koreanPages = pages
+    .map(({ path }) => path)
+    .filter((path) => localeOf(path) === 'ko');
 
-  /** Visible text, alt text and aria-labels, outside the contact form. */
+  /** Visible text, plus alt, aria-label, placeholder and title text. */
   function readable(page: string): string[] {
     const body = page
       .replace(/<!--[\s\S]*?-->/g, '')
       .replace(/<head>[\s\S]*?<\/head>/, '')
       .replace(/<script[\s\S]*?<\/script>/g, '')
-      .replace(/<style[\s\S]*?<\/style>/g, '')
-      // English on both pages until the Korean form copy is in.
-      .replace(/<section\s[^>]*id="contact"[\s\S]*?<\/section>/, '');
+      .replace(/<style[\s\S]*?<\/style>/g, '');
     const attributes = [
-      ...body.matchAll(/\b(?:alt|aria-label)="([^"]*)"/g),
+      ...body.matchAll(/\b(?:alt|aria-label|placeholder|title)="([^"]*)"/g),
     ].map((m) => m[1]!);
     // Tags end at the first > outside quotes; class values such as
     // [&>p]:mb-5 contain one.
@@ -186,17 +195,23 @@ describe('Korean home page', () => {
     return [text, ...attributes];
   }
 
-  it('has a contact form to leave out', () => {
-    expect(html['/ko']).toMatch(/<section\s[^>]*id="contact"/);
+  it('are the home page and both result pages', () => {
+    expect(koreanPages.sort()).toEqual([
+      '/ko',
+      '/ko/request-not-sent',
+      '/ko/request-sent',
+    ]);
   });
 
-  it('shows no English outside the contact form, apart from names', () => {
-    const english = readable(html['/ko']!).flatMap((chunk) => {
-      let rest = chunk;
-      for (const word of ALLOWED) rest = rest.replaceAll(word, '');
-      return rest.match(/[A-Za-z]{2,}/g) ?? [];
-    });
-    expect(english).toEqual([]);
+  it('show no English, contact form included, apart from names', () => {
+    for (const path of koreanPages) {
+      const english = readable(html[path]!).flatMap((chunk) => {
+        let rest = chunk;
+        for (const word of ALLOWED) rest = rest.replaceAll(word, '');
+        return rest.match(/[A-Za-z]{2,}/g) ?? [];
+      });
+      expect(english, path).toEqual([]);
+    }
   });
 
   it('uses the Korean title and description', () => {

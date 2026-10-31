@@ -4,8 +4,13 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import config from '../astro.config.mjs';
+import { copy } from '../src/data/copy';
 import { CONTACT_RATE_LIMIT } from '../src/lib/contact';
+import { RESULT_PAGES } from '../src/lib/contact-handler';
+import { LOCALES, localizePath } from '../src/lib/i18n';
 import IndexPage from '../src/pages/index.astro';
+import KoreanRequestNotSent from '../src/pages/ko/request-not-sent.astro';
+import KoreanRequestSent from '../src/pages/ko/request-sent.astro';
 import RequestNotSent from '../src/pages/request-not-sent.astro';
 import RequestSent from '../src/pages/request-sent.astro';
 import * as route from '../src/pages/api/contact';
@@ -36,6 +41,25 @@ describe('result pages', () => {
     expect(notSent).toContain('didn’t go through');
     expect(sent).toContain(NOINDEX);
     expect(notSent).toContain(NOINDEX);
+  });
+
+  it('render in Korean at the Korean paths, noindex', async () => {
+    const container = await AstroContainer.create();
+    const sent = await container.renderToString(KoreanRequestSent);
+    const notSent = await container.renderToString(KoreanRequestNotSent);
+    expect(sent).toContain(copy.ko.formResult.sent.heading);
+    expect(notSent).toContain(copy.ko.formResult.notSent.heading);
+    expect(sent).toContain(NOINDEX);
+    expect(notSent).toContain(NOINDEX);
+  });
+
+  it('are the pages the handler redirects to, in every language', () => {
+    for (const locale of LOCALES) {
+      expect(RESULT_PAGES[locale]).toEqual({
+        sent: localizePath('/request-sent', locale),
+        notSent: localizePath('/request-not-sent', locale),
+      });
+    }
   });
 
   it('leave the home page indexable', async () => {

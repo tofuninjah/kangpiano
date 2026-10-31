@@ -86,4 +86,37 @@ export interface PageCopy {
     callNowLabel: (phone: string) => string;
     request: string;
   };
+  /**
+   * The lesson request form. Status and error messages live in
+   * src/lib/contact.ts, which the form's browser script bundles.
+   */
+  contact: {
+    eyebrow: string;
+    heading: Emphasized;
+    intro: string;
+    callLabel: string;
+    name: string;
+    contact: string;
+    age: string;
+    ageHint: string;
+    town: string;
+    townPlaceholder: string;
+    /** Label for the "Somewhere else" town option; its value stays English. */
+    otherTown: string;
+    message: string;
+    /** Shown in brackets after an optional field's label. */
+    optional: string;
+    honeypot: string;
+    submit: string;
+    privacyNote: string;
+  };
+  /** Pages a no-JavaScript form post lands on. */
+  formResult: Record<'sent' | 'notSent', ResultCopy> & { back: string };
+}
+
+export interface ResultCopy {
+  title: string;
+  eyebrow: string;
+  heading: string;
+  body: string;
 }

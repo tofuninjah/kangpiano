@@ -34,8 +34,11 @@ test.describe('Korean page', () => {
       const found: string[] = [];
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
         const parent = node.parentElement!;
-        // Screen-reader-only text is clipped to 1px, so it "wraps" by design.
-        if (parent.closest('.sr-only')) continue;
+        // Screen-reader-only text and the hidden honeypot are squeezed into
+        // 1px on purpose, so they "wrap" by design. Option text isn't laid
+        // out as page text, and measuring it in WebKit trips a CSP report
+        // from the engine's own <select> internals.
+        if (parent.closest('.sr-only, [aria-hidden="true"], select')) continue;
         const half = parseFloat(getComputedStyle(parent).fontSize) / 2;
         for (const word of (node.textContent ?? '').matchAll(/\S+/g)) {
           if (!/[가-힣]/.test(word[0])) continue;
