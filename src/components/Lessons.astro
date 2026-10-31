@@ -39,7 +39,9 @@ const text = copy[locale];
             <h3 class="font-serif text-day text-plaster md:text-item">
               {lesson.title}
             </h3>
-            <p class="text-base/5 text-stone">{lesson.detail}</p>
+            <p class="text-base/5 text-stone [&:lang(ko)]:leading-6">
+              {lesson.detail}
+            </p>
           </div>
         </li>
       ))}

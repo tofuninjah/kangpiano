@@ -1,6 +1,7 @@
 ---
 // "ʻEwa Beach · Kapolei" visually; screen readers hear a comma instead of
-// the middle dot. data-town marks each name for the content tests.
+// the middle dot. Each name stays on one line, so "에바 비치(ʻEwa Beach)"
+// never splits. data-town marks each name for the content tests.
 interface Props {
   towns: readonly string[];
   class?: string;
@@ -18,7 +19,9 @@ const { towns, class: className } = Astro.props;
           <span class="sr-only">, </span>
         </>
       )}
-      <span data-town>{town}</span>
+      <span data-town class="whitespace-nowrap">
+        {town}
+      </span>
     </>
   ))}
 </p>
