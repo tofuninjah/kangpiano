@@ -1,11 +1,15 @@
 ---
 // Phones only. Height is 77px (12 + 52 + 12 + 1px border) plus the bottom
 // safe area; BaseLayout pads <body> by the same amount so the footer is
-// never covered. Change both together.
+// never covered. Change both together. global.css hides it while a form
+// field has focus, so it can't sit over the field being typed in.
 import { site } from '../data/site';
 ---
 
-<div class="fixed inset-x-0 bottom-0 z-40 flex gap-2.5 border-t border-staff bg-plaster px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
+<div
+  data-callbar
+  class="fixed inset-x-0 bottom-0 z-40 flex gap-2.5 border-t border-staff bg-plaster px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden"
+>
   <a
     href={site.phone.href}
     aria-label={`Call now, ${site.phone.display}`}

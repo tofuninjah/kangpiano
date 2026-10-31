@@ -15,6 +15,8 @@
   --color-stone: #b9b2a3;
   --color-ink-rule: #3a4152;
   --color-portrait: #e6e0d3;
+  /* Form errors only: an editor's red pencil, 7:1 on white */
+  --color-error: #a12a24;
 
   --font-serif: 'Newsreader Variable', Georgia, 'Times New Roman', serif;
   --font-sans:
@@ -113,4 +115,11 @@
       display: none;
     }
   }
+}
+
+/* On phones the fixed call bar can cover the field being typed in once the
+   keyboard is up, so hide it while a form field has focus. Unlayered on
+   purpose: it has to beat the bar's own `flex` utility. */
+body:has(form :is(input, select, textarea):focus) [data-callbar] {
+  display: none;
 }
