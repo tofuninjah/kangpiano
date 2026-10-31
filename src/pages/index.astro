@@ -1,28 +1,29 @@
 ---
-// Placeholder until the design A layout lands (rebuild step 2).
-import '../styles/global.css';
+// Placeholder content until the header and hero land (rebuild steps 3–4).
+// It exercises the type tokens so fonts can be checked against Paper.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../data/site';
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Hyejeong Kang Piano &amp; Violin</title>
-    <meta
-      name="description"
-      content="Private piano and violin lessons on Oʻahu, at your home in ʻEwa Beach and Kapolei or at Hyejeong's home in Mililani."
-    />
-  </head>
-  <body class="bg-white text-neutral-900">
-    <main class="mx-auto max-w-2xl px-4 py-16">
-      <h1 class="text-4xl font-semibold">Hyejeong Kang Piano &amp; Violin</h1>
-      <p class="mt-4 text-lg">Private lessons on Oʻahu.</p>
-      <p class="mt-2 text-lg">
-        <a class="underline" href="tel:+18083710708">
-          Call (808) 371-0708
-        </a>
-      </p>
-    </main>
-  </body>
-</html>
+<BaseLayout>
+  <section class="mx-auto flex max-w-page flex-col gap-6 px-5 pt-8 pb-16 md:px-12 lg:gap-9 lg:px-24 lg:pt-24 lg:pb-28">
+    <p class="text-label font-semibold text-pencil uppercase">
+      Private lessons · Oʻahu · All ages
+    </p>
+    <h1 class="max-w-[42.5rem] font-serif text-display-sm font-light lg:text-display">
+      Piano lessons in your living room, <em class="text-quink">or mine.</em>
+    </h1>
+    <p class="max-w-[35rem] text-lead">
+      I teach at your home in ʻEwa Beach and Kapolei, and at my home in
+      Mililani.
+    </p>
+    <p>
+      <a
+        href={site.phone.href}
+        class="inline-block rounded-full bg-quink px-[1.875rem] py-[1.125rem] text-ui font-semibold text-paper"
+      >
+        Call {site.phone.display}
+      </a>
+    </p>
+  </section>
+</BaseLayout>
