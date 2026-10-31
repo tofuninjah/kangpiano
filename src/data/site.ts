@@ -15,12 +15,12 @@ export const site = {
     href: 'tel:+18083710708',
   },
   towns: allTowns(),
-  // Section anchors on the home page, shared by the desktop nav and the
-  // mobile menu.
+  // Home-page sections, shared by the desktop nav and the mobile menu.
+  // Rooted at / so they also work from the form result pages.
   nav: [
-    { label: 'Where & when', href: '#schedule' },
-    { label: 'Lessons', href: '#lessons' },
-    { label: 'About', href: '#about' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'Where & when', href: '/#schedule' },
+    { label: 'Lessons', href: '/#lessons' },
+    { label: 'About', href: '/#about' },
+    { label: 'Contact', href: '/#contact' },
   ],
 } as const;

@@ -32,6 +32,14 @@ export default defineConfig(
     },
   },
   {
-    ignores: ['dist', 'node_modules', '.vercel', '.astro'],
+    ignores: [
+      'dist',
+      'node_modules',
+      '.vercel',
+      '.astro',
+      'test-results',
+      'playwright-report',
+      'blob-report',
+    ],
   }
 );

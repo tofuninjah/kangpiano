@@ -22,8 +22,8 @@ export default defineConfig({
     checkOrigin: true,
     // Each built page gets a CSP <meta> whose script-src and style-src are
     // 'self' plus hashes of Astro's inline scripts and styles, so neither
-    // needs 'unsafe-inline'. frame-ancestors can't live in a meta tag; it
-    // stays in vercel.json alongside the other headers.
+    // needs 'unsafe-inline'. frame-ancestors can't live in a meta tag; it's
+    // sent as a header from vercel.json.
     csp: {
       directives: [
         "default-src 'self'",

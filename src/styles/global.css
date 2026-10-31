@@ -128,6 +128,14 @@
   }
 }
 
+/* Without the Popover API the menu above is hidden, so its Menu button would
+   do nothing. Unlayered so it beats the button's inline-flex utility. */
+@supports not selector(:popover-open) {
+  [popovertarget] {
+    display: none;
+  }
+}
+
 /* On phones the fixed call bar can cover the field being typed in once the
    keyboard is up, so hide it while a form field has focus. Unlayered on
    purpose: it has to beat the bar's own `flex` utility. */

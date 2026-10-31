@@ -18,6 +18,10 @@ updates:
       # Majors land on your schedule, not Dependabot's.
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
+      # Held on 7.3.x: 7.4 raises the Node floor to 22.23.4 (see CLAUDE.md).
+      # Lift this once Vercel's Node 22 runtime is confirmed to meet it.
+      - dependency-name: 'astro'
+        update-types: ['version-update:semver-minor']
 
   - package-ecosystem: github-actions
     directory: '/'

@@ -116,10 +116,25 @@ import { site } from '../data/site';
 
 <script>
   const menu = document.getElementById('site-menu');
+  const opener = document.querySelector<HTMLElement>(
+    '[popovertarget="site-menu"]:not([popovertargetaction])'
+  );
   if (menu) {
     menu.addEventListener('click', (event) => {
       if (event.target instanceof Element && event.target.closest('a')) {
         menu.hidePopover();
+      }
+    });
+
+    // Safari's Tab order skips an open popover, and on close it leaves focus
+    // inside the hidden menu. Move focus in on open, and back to the Menu
+    // button on close if it was left inside (Chromium already does that).
+    menu.addEventListener('toggle', (event) => {
+      if (!(event instanceof ToggleEvent)) return;
+      if (event.newState === 'open') {
+        menu.querySelector<HTMLElement>('button, a')?.focus();
+      } else if (menu.contains(document.activeElement)) {
+        opener?.focus();
       }
     });
   }
