@@ -95,7 +95,7 @@ export const en = {
     daysLabel: 'Lesson days',
     locationTitle: (host) =>
       host === 'student' ? 'At your home' : 'At my home',
-    townLabel: (town) => town,
+    townLabel: (town) => ({ name: town }),
   },
   lessons: {
     eyebrow: 'Lessons',

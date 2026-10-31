@@ -21,7 +21,7 @@ const text = copy[locale];
       {text.name} <span class="text-stone italic">{text.instruments}</span>
     </p>
     <TownList
-      towns={site.towns.map(text.townName)}
+      towns={site.towns.map((town) => ({ name: text.townName(town) }))}
       class="text-small text-stone"
     />
     <div class="flex items-center gap-6">

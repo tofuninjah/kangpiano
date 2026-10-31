@@ -32,6 +32,19 @@ export function withParticle(
   return `${word}${endsInConsonant(word) ? forms.consonant : forms.vowel}`;
 }
 
+/**
+ * A phone number followed by 로 ("to/by"), as in "(808) 371-0708로 전화
+ *주세요". Numbers are read digit by digit, and 로 follows a vowel or ㄹ
+ * while 으로 follows other consonants: 0 (영), 3 (삼) and 6 (육).
+ */
+export function koreanRo(phone: string): string {
+  const last = phone.trim().at(-1) ?? '';
+  if (!/\d/.test(last)) {
+    throw new Error(`Expected a digit at the end of "${phone}"`);
+  }
+  return `${phone}${/[036]/.test(last) ? '으로' : '로'}`;
+}
+
 /** "A", "A와 B", "A, B와 C". */
 export function koreanList(items: readonly string[]): string {
   if (items.length < 2) return items.join('');

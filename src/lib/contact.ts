@@ -3,6 +3,7 @@
 // so the messages live here rather than in the larger copy files.
 import { site } from '../data/site';
 import { DEFAULT_LOCALE, type Locale } from './i18n';
+import { koreanRo } from './korean';
 import { allTowns } from './schedule';
 
 /** Every message a visitor can see about their request. */
@@ -19,9 +20,7 @@ export interface ContactMessages {
 }
 
 const phone = site.phone.display;
-// Korean "to/by" is 로 after a vowel or ㄹ and 으로 after other consonants;
-// read aloud, numbers ending in 0, 3 or 6 (영, 삼, 육) take 으로.
-const phoneRo = `${phone}${/[036]$/.test(phone) ? '으로' : '로'}`;
+const phoneRo = koreanRo(phone);
 
 export const CONTACT_MESSAGES: Record<Locale, ContactMessages> = {
   en: {
@@ -51,7 +50,13 @@ export const CONTACT_MESSAGES: Record<Locale, ContactMessages> = {
  * returns their wording; each language words them in FIELD_MESSAGES.
  */
 export type FieldErrorCode =
-  'name' | 'contact' | 'contactFormat' | 'town' | 'tooLong';
+  | 'name'
+  | 'contact'
+  | 'contactFormat'
+  | 'town'
+  | 'tooLong'
+  /** Fallback for a schema rule that reports no code of its own. */
+  | 'invalid';
 
 /** What a visitor reads under a field they got wrong, per language. */
 export const FIELD_MESSAGES: Record<Locale, Record<FieldErrorCode, string>> = {
@@ -61,6 +66,7 @@ export const FIELD_MESSAGES: Record<Locale, Record<FieldErrorCode, string>> = {
     contactFormat: 'Please enter a phone number or an email address.',
     town: 'Please choose a town.',
     tooLong: 'That’s too long.',
+    invalid: 'Please check this field.',
   },
   ko: {
     name: '이름을 입력해 주세요.',
@@ -68,6 +74,7 @@ export const FIELD_MESSAGES: Record<Locale, Record<FieldErrorCode, string>> = {
     contactFormat: '올바른 전화번호나 이메일 주소를 입력해 주세요.',
     town: '지역을 선택해 주세요.',
     tooLong: '글자 수가 너무 많습니다. 조금 줄여 주세요.',
+    invalid: '이 항목을 확인해 주세요.',
   },
 };
 

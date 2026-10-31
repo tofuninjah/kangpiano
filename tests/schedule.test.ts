@@ -54,10 +54,21 @@ const BARE_SPELLINGS = ['Ewa Beach', 'Wahiawa\\b', 'Aiea', 'Waianae'].map(
 
 const dayPattern = new RegExp(`\\b(${WEEKDAYS.join('|')})\\b`, 'g');
 
+// A town's text, including an English name nested in a lang="en" span.
+const TOWN =
+  /<span[^>]*\bdata-town\b[^>]*>((?:[^<]|<span lang="en">[^<]*<\/span>)*)<\/span>/g;
+
 function townsIn(html: string): string[] {
-  return [
-    ...html.matchAll(/<span[^>]*\bdata-town\b[^>]*>([^<]*)<\/span>/g),
-  ].map((match) => match[1]!.trim());
+  return [...html.matchAll(TOWN)].map((match) =>
+    match[1]!.replace(/<[^>]+>/g, '').trim()
+  );
+}
+
+/** The English names a block marks with lang="en". */
+function englishIn(html: string): string[] {
+  return [...html.matchAll(/<span lang="en">\(([^<]*)\)<\/span>/g)].map(
+    (match) => match[1]!
+  );
 }
 
 function textOf(html: string): string {
@@ -206,6 +217,7 @@ describe('Korean schedule section', () => {
       expect(townsIn(block)).toEqual(
         location.towns.map((town) => `${koreanName(town)}(${town})`)
       );
+      expect(englishIn(block)).toEqual([...location.towns]);
       expect([...block.matchAll(koDayPattern)].map((m) => m[1])).toEqual(
         location.days.map(copy.ko.dayName)
       );

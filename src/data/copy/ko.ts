@@ -1,10 +1,13 @@
 // Korean copy, written for Korean and Korean-American parents rather than
-// translated line by line. It was drafted and reviewed in the Claude Doc
-// "Kang Piano: Korean page copy (draft)", which Hyejeong signs off before
-// merge. Until she answers, lines about her training, experience and
-// students say no more than the English page does: 음악 전공 졸업 for
-// "Music graduate", 오랜 레슨 경력 for "Many years", 어린이부터 성인까지
-// for "First-timers to returning adults".
+// translated line by line. This file is the source of truth for what the
+// Korean page says. The Claude Doc "Kang Piano: Korean page copy (draft)"
+// is where Hyejeong reviews it: her approved wording is copied here before
+// merge, and after that the doc is a frozen record, not something to keep
+// in sync. Later changes are made here and shown to her again.
+// Until she answers, lines about her training, experience and students say
+// no more than the English page does: 음악 전공 졸업 for "Music graduate",
+// 오랜 레슨 경력 for "Many years", 어린이부터 성인까지 for "First-timers to
+// returning adults".
 import { koreanList, withParticle } from '../../lib/korean';
 import { inHomeTowns } from '../../lib/schedule';
 import { locations, type Day } from '../schedule';
@@ -155,7 +158,7 @@ export const ko = {
     locationTitle: (host) =>
       host === 'student' ? '방문 레슨' : '선생님 댁 레슨',
     // English beside the Hangul so parents can match the town on a map.
-    townLabel: (town) => `${townName(town)}(${town})`,
+    townLabel: (town) => ({ name: townName(town), english: town }),
   },
   lessons: {
     eyebrow: '레슨 안내',

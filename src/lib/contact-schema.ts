@@ -92,6 +92,19 @@ export function parseLocale(form: FormValues): Locale {
 }
 
 /**
+ * The visitor-facing wording for a schema issue. Every rule reports a
+ * FieldErrorCode; anything else (a rule written with a plain message)
+ * still gets a generic message, so its field is highlighted rather than
+ * dropped, and no raw rule text reaches the visitor.
+ */
+export function fieldMessage(issue: string, locale: Locale): string {
+  const messages = FIELD_MESSAGES[locale];
+  return Object.hasOwn(messages, issue)
+    ? messages[issue as FieldErrorCode]
+    : messages.invalid;
+}
+
+/**
  * Validates the allowlisted fields only. Missing fields count as empty, so
  * the required-field messages apply. Errors are worded in `locale`.
  */
@@ -111,10 +124,7 @@ export function parseContact(
   const errors: ContactErrors = {};
   for (const issue of result.error.issues) {
     const field = issue.path[0] as ContactField;
-    // Every rule above reports one of the codes; the guard keeps a code
-    // from ever reaching the visitor if a new rule forgets to.
-    const message = FIELD_MESSAGES[locale][issue.message as FieldErrorCode];
-    if (message) errors[field] ??= message;
+    errors[field] ??= fieldMessage(issue.message, locale);
   }
   return { ok: false, errors };
 }

@@ -3,6 +3,7 @@
 // is room between lines of Hangul, emphasis isn't a slanted fake italic, and
 // nothing runs off a phone screen. The English page keeps its own settings.
 import type { Page } from '@playwright/test';
+import { HONEYPOT_FIELD } from '../src/lib/contact';
 import { expect, test } from './test';
 
 /** Line height over font size for the page's first match. */
@@ -24,7 +25,7 @@ test.describe('Korean page', () => {
   test('breaks lines between words, never inside a Korean word', async ({
     page,
   }) => {
-    const broken = await page.evaluate(() => {
+    const broken = await page.evaluate((honeypot) => {
       // Measure the folded "why piano" text too.
       for (const details of document.querySelectorAll('details')) {
         details.open = true;
@@ -34,11 +35,12 @@ test.describe('Korean page', () => {
       const found: string[] = [];
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
         const parent = node.parentElement!;
-        // Screen-reader-only text and the hidden honeypot are squeezed into
-        // 1px on purpose, so they "wrap" by design. Option text isn't laid
-        // out as page text, and measuring it in WebKit trips a CSP report
-        // from the engine's own <select> internals.
-        if (parent.closest('.sr-only, [aria-hidden="true"], select')) continue;
+        // Screen-reader-only text and the honeypot's hidden wrapper are
+        // squeezed into 1px on purpose, so they "wrap" by design. Option
+        // text isn't laid out as page text, and measuring it in WebKit trips
+        // a CSP report from the engine's own <select> internals.
+        const skip = `.sr-only, select, :has(> [name="${honeypot}"])`;
+        if (parent.closest(skip)) continue;
         const half = parseFloat(getComputedStyle(parent).fontSize) / 2;
         for (const word of (node.textContent ?? '').matchAll(/\S+/g)) {
           if (!/[가-힣]/.test(word[0])) continue;
@@ -54,7 +56,7 @@ test.describe('Korean page', () => {
         }
       }
       return found;
-    });
+    }, HONEYPOT_FIELD);
     expect(broken).toEqual([]);
   });
 

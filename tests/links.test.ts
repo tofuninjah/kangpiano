@@ -4,26 +4,20 @@
 // page it names.
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
-import IndexPage from '../src/pages/index.astro';
-import KoreanIndexPage from '../src/pages/ko/index.astro';
-import RequestNotSent from '../src/pages/request-not-sent.astro';
-import RequestSent from '../src/pages/request-sent.astro';
+import { localeOf } from '../src/lib/i18n';
+import { pages } from './pages';
 
-const pages = {
-  '/': IndexPage,
-  '/ko': KoreanIndexPage,
-  '/request-sent': RequestSent,
-  '/request-not-sent': RequestNotSent,
-};
 const homes = ['/', '/ko'];
 const html: Record<string, string> = {};
 
 beforeAll(async () => {
   const container = await AstroContainer.create();
-  for (const [path, page] of Object.entries(pages)) {
-    html[path] = await container.renderToString(page, {
-      request: new Request(`http://localhost${path}`),
-    });
+  for (const { path, page } of pages) {
+    // The glob is typed unknown; every match is an .astro page component.
+    html[path] = await container.renderToString(
+      page as Parameters<typeof container.renderToString>[0],
+      { request: new Request(`http://localhost${path}`) }
+    );
   }
 });
 
@@ -33,7 +27,7 @@ const ids = (page: string) =>
   new Set([...page.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]!));
 
 describe('section links', () => {
-  for (const path of Object.keys(pages)) {
+  for (const { path } of pages) {
     it(`on ${path}, every same-page link has a target on that page`, () => {
       const targets = ids(html[path]!);
       const missing = hrefs(html[path]!)
@@ -55,11 +49,22 @@ describe('section links', () => {
     });
   }
 
-  it('sends the Korean home page’s section links to the Korean home page', () => {
-    const sectionLinks = hrefs(html['/ko']!).filter((href) =>
-      /^\/[^#]*#/.test(href)
-    );
-    expect(sectionLinks.length).toBeGreaterThan(0);
-    expect(sectionLinks.filter((href) => !href.startsWith('/ko#'))).toEqual([]);
+  it('sends every Korean page’s section links to the Korean home page', () => {
+    const korean = pages.filter(({ path }) => localeOf(path) === 'ko');
+    expect(korean.map(({ path }) => path).sort()).toEqual([
+      '/ko',
+      '/ko/request-not-sent',
+      '/ko/request-sent',
+    ]);
+    for (const { path } of korean) {
+      const sectionLinks = hrefs(html[path]!).filter((href) =>
+        /^\/[^#]*#/.test(href)
+      );
+      expect(sectionLinks.length, path).toBeGreaterThan(0);
+      expect(
+        sectionLinks.filter((href) => !href.startsWith('/ko#')),
+        path
+      ).toEqual([]);
+    }
   });
 });

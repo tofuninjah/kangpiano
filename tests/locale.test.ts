@@ -14,19 +14,9 @@ import {
   localizePath,
 } from '../src/lib/i18n';
 import { allTowns } from '../src/lib/schedule';
+import { pages } from './pages';
 
 const siteUrl = config.site!;
-
-// Every page component, keyed by the path it's served at.
-const pages = Object.entries(
-  import.meta.glob('../src/pages/**/*.astro', {
-    eager: true,
-    import: 'default',
-  })
-).map(([file, page]) => {
-  const name = file.replace('../src/pages/', '').replace(/\.astro$/, '');
-  return { path: `/${name.replace(/(^|\/)index$/, '')}`, page };
-});
 
 const html: Record<string, string> = {};
 
@@ -72,6 +62,15 @@ const translated = LOCALES.flatMap((locale) =>
     url: localizePath(path, locale),
   }))
 );
+
+describe('structured data', () => {
+  it('appears on the two home pages and no other page', () => {
+    const withJsonLd = pages
+      .map(({ path }) => path)
+      .filter((path) => html[path]!.includes('application/ld+json'));
+    expect(withJsonLd.sort()).toEqual(['/', '/ko']);
+  });
+});
 
 describe('page language', () => {
   it('has a Korean home page', () => {

@@ -1,9 +1,13 @@
 ---
 // "ʻEwa Beach · Kapolei" visually; screen readers hear a comma instead of
 // the middle dot. Each name stays on one line, so "에바 비치(ʻEwa Beach)"
-// never splits. data-town marks each name for the content tests.
+// never splits, and an English name shown beside a translated one is
+// marked lang="en" so screen readers say it in English. data-town marks
+// each name for the content tests.
+import type { TownLabel } from '../data/copy/types';
+
 interface Props {
-  towns: readonly string[];
+  towns: readonly TownLabel[];
   class?: string;
 }
 
@@ -20,7 +24,8 @@ const { towns, class: className } = Astro.props;
         </>
       )}
       <span data-town class="whitespace-nowrap">
-        {town}
+        {/* One array, so no whitespace can fall between name and bracket. */}
+        {[town.name, town.english && <span lang="en">({town.english})</span>]}
       </span>
     </>
   ))}

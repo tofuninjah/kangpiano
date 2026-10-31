@@ -10,6 +10,7 @@ import {
 } from '../src/lib/contact';
 import {
   CONTACT_FIELDS,
+  fieldMessage,
   parseContact,
   parseLocale,
 } from '../src/lib/contact-schema';
@@ -183,12 +184,6 @@ describe('parseContact in Korean', () => {
       },
     });
   });
-
-  it('has a message for every error code in every language', () => {
-    expect(Object.keys(FIELD_MESSAGES.ko).sort()).toEqual(
-      Object.keys(FIELD_MESSAGES.en).sort()
-    );
-  });
 });
 
 describe('isEmail', () => {
@@ -266,5 +261,24 @@ describe('fieldError', () => {
 
   it('ignores fields it does not know about', () => {
     expect(fieldError('website', '')).toBeUndefined();
+  });
+});
+
+describe('fieldMessage', () => {
+  it('words each error code in the page’s language', () => {
+    for (const locale of LOCALES) {
+      expect(fieldMessage('town', locale)).toBe(FIELD_MESSAGES[locale].town);
+    }
+  });
+
+  it('flags the field with a generic message when a rule reports no code', () => {
+    // A future rule written as .max(n, 'Too long') instead of code('tooLong')
+    // must still highlight its field rather than vanish.
+    for (const locale of LOCALES) {
+      expect(fieldMessage('Too long', locale)).toBe(
+        FIELD_MESSAGES[locale].invalid
+      );
+    }
+    expect(fieldMessage('__proto__', 'en')).toBe(FIELD_MESSAGES.en.invalid);
   });
 });

@@ -6,20 +6,10 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import config from '../astro.config.mjs';
 import { GET as robots } from '../src/pages/robots.txt';
 import { GET as sitemap, INDEXED_PATHS } from '../src/pages/sitemap.xml';
+import { pages } from './pages';
 
 const site = new URL(config.site!);
 const context = { site } as unknown as APIContext;
-
-// Every page component, keyed by the path it's served at.
-const pages = Object.entries(
-  import.meta.glob('../src/pages/**/*.astro', {
-    eager: true,
-    import: 'default',
-  })
-).map(([file, page]) => {
-  const name = file.replace('../src/pages/', '').replace(/\.astro$/, '');
-  return { path: `/${name.replace(/(^|\/)index$/, '')}`, page };
-});
 
 let indexable: string[];
 

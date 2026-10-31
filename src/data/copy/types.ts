@@ -64,7 +64,7 @@ export interface PageCopy {
     daysLabel: string;
     locationTitle: (host: Location['host']) => string;
     /** A town as the schedule section shows it. */
-    townLabel: (town: string) => string;
+    townLabel: (town: string) => TownLabel;
   };
   lessons: {
     eyebrow: string;
@@ -112,6 +112,13 @@ export interface PageCopy {
   };
   /** Pages a no-JavaScript form post lands on. */
   formResult: Record<'sent' | 'notSent', ResultCopy> & { back: string };
+}
+
+/** A town name as shown, with the English name beside it when translated. */
+export interface TownLabel {
+  name: string;
+  /** Shown in brackets after the name, marked lang="en". */
+  english?: string;
 }
 
 export interface ResultCopy {

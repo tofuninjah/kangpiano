@@ -27,10 +27,7 @@ const text = copy[locale];
       class="font-serif text-display-sm font-light md:max-w-[31rem] md:text-display-md lg:max-w-none lg:text-display-lg xl:text-display"
     >
       {text.hero.heading.lead}{' '}
-      {/* The Korean emphasis is too long to hold on one line on phones. */}
-      <em class="whitespace-nowrap text-quink [&:lang(ko)]:whitespace-normal">
-        {text.hero.heading.emphasis}
-      </em>
+      <em class="whitespace-nowrap text-quink">{text.hero.heading.emphasis}</em>
     </h1>
     <p class="max-w-[35rem] text-lead-sm md:text-lead" data-teaching>
       {text.hero.teachingSentence}
