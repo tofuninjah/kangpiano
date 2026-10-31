@@ -167,14 +167,31 @@ test.describe('language link', () => {
   test('goes from the English page to the Korean page and back', async ({
     page,
   }) => {
-    await page.getByRole('link', { name: '한국어', exact: true }).click();
+    await page
+      .getByRole('banner')
+      .getByRole('link', { name: '한국어', exact: true })
+      .click();
     await expect(page).toHaveURL('/ko');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ko');
 
-    await page.getByRole('link', { name: 'English', exact: true }).click();
+    await page
+      .getByRole('banner')
+      .getByRole('link', { name: 'English', exact: true })
+      .click();
     await expect(page).toHaveURL('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   });
+});
+
+test('the footer links to the other language too', async ({ page }) => {
+  await page
+    .getByRole('contentinfo')
+    .getByRole('link', { name: '한국어', exact: true })
+    .click();
+  await expect(page).toHaveURL('/ko');
+  await expect(
+    page.getByRole('contentinfo').getByRole('link', { name: 'English' })
+  ).toHaveAttribute('href', '/');
 });
 
 test.describe('Korean page', () => {

@@ -139,9 +139,11 @@ describe('hreflang', () => {
   });
 });
 
+// The same link sits in the header and the footer.
 describe('language link', () => {
   it('goes from the English home page to the Korean one, marked as Korean', () => {
     expect(languageLinks(html['/']!)).toEqual([
+      { href: '/ko', lang: 'ko', hreflang: 'ko', text: '한국어' },
       { href: '/ko', lang: 'ko', hreflang: 'ko', text: '한국어' },
     ]);
   });
@@ -149,14 +151,22 @@ describe('language link', () => {
   it('goes from the Korean home page to the English one, marked as English', () => {
     expect(languageLinks(html['/ko']!)).toEqual([
       { href: '/', lang: 'en', hreflang: 'en', text: 'English' },
+      { href: '/', lang: 'en', hreflang: 'en', text: 'English' },
     ]);
   });
 
   it('goes between the two versions of a result page', () => {
     expect(languageLinks(html['/request-sent']!)).toEqual([
       { href: '/ko/request-sent', lang: 'ko', hreflang: 'ko', text: '한국어' },
+      { href: '/ko/request-sent', lang: 'ko', hreflang: 'ko', text: '한국어' },
     ]);
     expect(languageLinks(html['/ko/request-not-sent']!)).toEqual([
+      {
+        href: '/request-not-sent',
+        lang: 'en',
+        hreflang: 'en',
+        text: 'English',
+      },
       {
         href: '/request-not-sent',
         lang: 'en',

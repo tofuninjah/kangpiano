@@ -17,10 +17,9 @@ interface Props {
 
 const { locale } = Astro.props;
 
-// The structured data describes the business in English, so it stays on
-// the English page until it has Korean text of its own.
-const structuredData =
-  locale === 'en' ? localBusinessJsonLd(Astro.site?.href) : undefined;
+// Each home page describes the business in its own language; the shared
+// @id tells search engines it's the same business.
+const structuredData = localBusinessJsonLd(locale, Astro.site?.href);
 ---
 
 <BaseLayout locale={locale} structuredData={structuredData}>

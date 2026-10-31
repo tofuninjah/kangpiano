@@ -1,14 +1,8 @@
 ---
 import { copy } from '../data/copy';
 import { site } from '../data/site';
-import {
-  LOCALES,
-  LOCALE_DETAILS,
-  homeSectionHref,
-  languageLinkPath,
-  localizePath,
-  type Locale,
-} from '../lib/i18n';
+import { homeSectionHref, localizePath, type Locale } from '../lib/i18n';
+import LanguageLink from './LanguageLink.astro';
 
 interface Props {
   locale: Locale;
@@ -23,16 +17,6 @@ const nav = site.navSections.map((section) => ({
   label: text.header.nav[section],
   href: homeSectionHref(section, locale),
 }));
-
-// One link per other language, named in that language and marked with its
-// lang so screen readers switch voice for it.
-const languageLinks = LOCALES.filter((other) => other !== locale).map(
-  (other) => ({
-    href: languageLinkPath(path, other),
-    tag: LOCALE_DETAILS[other].tag,
-    name: LOCALE_DETAILS[other].name,
-  })
-);
 ---
 
 <header class="border-b border-staff">
@@ -66,16 +50,11 @@ const languageLinks = LOCALES.filter((other) => other !== locale).map(
       </nav>
 
       {/* Shown at every width, so phone visitors find it without the menu. */}
-      {languageLinks.map((link) => (
-        <a
-          href={link.href}
-          lang={link.tag}
-          hreflang={link.tag}
-          class="inline-flex h-11 items-center text-base/5 whitespace-nowrap text-ink underline-offset-4 hover:underline"
-        >
-          {link.name}
-        </a>
-      ))}
+      <LanguageLink
+        locale={locale}
+        path={path}
+        class="inline-flex h-11 items-center text-base/5 whitespace-nowrap text-ink underline-offset-4 hover:underline"
+      />
 
       <a
         href={site.phone.href}

@@ -2,13 +2,16 @@
 import { copy } from '../data/copy';
 import { site } from '../data/site';
 import type { Locale } from '../lib/i18n';
+import LanguageLink from './LanguageLink.astro';
 import TownList from './TownList.astro';
 
 interface Props {
   locale: Locale;
+  /** The page's path without its language prefix. */
+  path: string;
 }
 
-const { locale } = Astro.props;
+const { locale, path } = Astro.props;
 const text = copy[locale];
 ---
 
@@ -21,11 +24,18 @@ const text = copy[locale];
       towns={site.towns.map(text.townName)}
       class="text-small text-stone"
     />
-    <a
-      href={site.phone.href}
-      class="text-small text-plaster underline-offset-4 hover:underline focus-visible:outline-plaster"
-    >
-      {site.phone.display}
-    </a>
+    <div class="flex items-center gap-6">
+      <a
+        href={site.phone.href}
+        class="text-small text-plaster underline-offset-4 hover:underline focus-visible:outline-plaster"
+      >
+        {site.phone.display}
+      </a>
+      <LanguageLink
+        locale={locale}
+        path={path}
+        class="text-small text-plaster underline-offset-4 hover:underline focus-visible:outline-plaster"
+      />
+    </div>
   </div>
 </footer>
