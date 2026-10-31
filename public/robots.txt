@@ -1,0 +1,4 @@
+# The two form result pages carry a noindex meta tag; they stay crawlable
+# so search engines can see it. Add a Sitemap line once the domain is set.
+User-agent: *
+Allow: /

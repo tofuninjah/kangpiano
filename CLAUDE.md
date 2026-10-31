@@ -18,7 +18,8 @@ One-page site for Hyejeong Kang's private piano and violin lessons on Oʻahu. Re
 
 ## Deploy and env
 
-- Vercel. Security headers live in `vercel.json` (from `global-claude-config/templates/astro-vercel`). The full CSP is report-only until a clean console pass; HSTS has no `preload` because the domain isn't settled.
+- Vercel. Security headers live in `vercel.json` (from `global-claude-config/templates/astro-vercel`); HSTS has no `preload` because the domain isn't settled. The enforced script/style CSP is Astro's `security.csp` `<meta>` (hashes, no `unsafe-inline`); `frame-ancestors` and the report-only policy stay in `vercel.json`.
+- `astro preview` doesn't work with `@astrojs/vercel`. To check the CSP, build and serve `.vercel/output/static` with any static server; the CSP isn't applied in `npm run dev`.
 - No production domain yet. pianokang.com now belongs to someone else: never use it in code, links, or email addresses.
 - Secrets go in Vercel env vars, with names in `.env.example`. Read server secrets through `process.env`; Astro inlines `import.meta.env` at build time.
 

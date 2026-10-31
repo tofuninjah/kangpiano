@@ -20,7 +20,26 @@ export default defineConfig({
     // Default in Astro 7, stated so it isn't turned off by accident: rejects
     // cross-site form posts to on-demand routes (the contact endpoint).
     checkOrigin: true,
+    // Each built page gets a CSP <meta> whose script-src and style-src are
+    // 'self' plus hashes of Astro's inline scripts and styles, so neither
+    // needs 'unsafe-inline'. frame-ancestors can't live in a meta tag; it
+    // stays in vercel.json alongside the other headers.
+    csp: {
+      directives: [
+        "default-src 'self'",
+        "img-src 'self' data:",
+        // Vite inlines font files under 4 KB as data: URIs.
+        "font-src 'self' data:",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+      ],
+    },
   },
+
+  // No Markdown here; Shiki's inline styles would also clash with the CSP.
+  markdown: { syntaxHighlight: false },
 
   vite: {
     plugins: [tailwindcss()],

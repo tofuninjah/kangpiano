@@ -12,19 +12,29 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import CallBar from '../components/CallBar.astro';
 import { site } from '../data/site';
+import { toJsonLdScript } from '../lib/structured-data';
 
 interface Props {
   title?: string;
   description?: string;
   /** Keep utility pages (form results) out of search results. */
   noindex?: boolean;
+  /** schema.org data rendered as JSON-LD (the home page passes it). */
+  structuredData?: unknown;
 }
 
 const {
   title = site.title,
   description = site.description,
   noindex = false,
+  structuredData,
 } = Astro.props;
+
+// Absolute URLs need `site`, which waits on the domain; until then these
+// tags are simply left out.
+const canonical = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : undefined;
 ---
 
 <!doctype html>
@@ -36,6 +46,24 @@ const {
     <meta name="description" content={description} />
     <meta name="theme-color" content="#f4f1ea" />
     {noindex && <meta name="robots" content="noindex" />}
+    {canonical && <link rel="canonical" href={canonical} />}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.title} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content="en_US" />
+    {canonical && <meta property="og:url" content={canonical} />}
+    <meta name="twitter:card" content="summary" />
+    {structuredData !== undefined && (
+      <script
+        is:inline
+        type="application/ld+json"
+        set:html={toJsonLdScript(structuredData)}
+      />
+    )}
     <!-- The hero headline is set in Newsreader; preload it to avoid a late swap. -->
     <link
       rel="preload"
