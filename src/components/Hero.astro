@@ -1,0 +1,54 @@
+---
+import { Picture } from 'astro:assets';
+import heroImage from '../assets/images/hero-main.jpeg';
+import { site } from '../data/site';
+// Stock photo until Hyejeong supplies one of herself teaching.
+---
+
+<section
+  aria-labelledby="hero-heading"
+  class="mx-auto flex max-w-page flex-col gap-8 px-5 pt-8 pb-12 md:gap-12 md:px-12 md:pt-16 md:pb-20 lg:flex-row lg:items-end lg:gap-16 lg:pt-20 lg:pb-24 xl:gap-20 xl:px-24 xl:pt-24 xl:pb-28"
+>
+  <div class="flex flex-col gap-5 md:gap-8 lg:w-[34rem] lg:shrink-0 xl:w-[42.5rem] xl:gap-9">
+    <p class="text-label font-semibold text-pencil uppercase">
+      Private lessons · Oʻahu · All ages
+    </p>
+    <h1
+      id="hero-heading"
+      class="font-serif text-display-sm font-light md:max-w-[31rem] md:text-display-md lg:max-w-none lg:text-display-lg xl:text-display"
+    >
+      Piano lessons in your living room,{' '}
+      <em class="whitespace-nowrap text-quink">or mine.</em>
+    </h1>
+    <p class="max-w-[35rem] text-lead-sm md:text-lead">
+      I teach at your home in ʻEwa Beach and Kapolei, and at my home in
+      Mililani.
+    </p>
+    <!-- Phones get these two actions from the sticky CallBar instead. -->
+    <div class="hidden items-center gap-7 pt-2 md:flex">
+      <a
+        href={site.phone.href}
+        class="rounded-full bg-quink px-[1.875rem] py-[1.125rem] text-ui font-semibold text-paper transition-colors hover:bg-ink"
+      >
+        Call {site.phone.display}
+      </a>
+      <a
+        href="#contact"
+        class="border-b-[1.5px] border-quink pb-1 text-ui font-semibold text-quink transition-colors hover:border-ink hover:text-ink"
+      >
+        Request a first lesson <span aria-hidden="true">→</span>
+      </a>
+    </div>
+  </div>
+
+  <Picture
+    src={heroImage}
+    alt="Hands playing a piano keyboard in warm light."
+    formats={['avif', 'webp']}
+    widths={[480, 800, 1200, 1600]}
+    sizes="(min-width: 1440px) 488px, (min-width: 1280px) calc(100vw - 59.5rem), (min-width: 1024px) calc(100vw - 44rem), (min-width: 768px) calc(100vw - 6rem), calc(100vw - 2.5rem)"
+    priority
+    pictureAttributes={{ class: 'block lg:min-w-0 lg:flex-1' }}
+    class="aspect-[3/2] w-full rounded-sm object-cover md:aspect-[16/9] lg:aspect-auto lg:h-[27.5rem] xl:h-[32.5rem]"
+  />
+</section>
