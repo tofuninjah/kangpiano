@@ -14,6 +14,15 @@ export const CONTACT_MESSAGES = {
   offline: `Couldn’t reach the server. Check your connection, or call ${site.phone.display}.`,
 } as const;
 
+/** What a visitor reads under a field they got wrong. */
+export const FIELD_MESSAGES = {
+  name: 'Please enter your name.',
+  contact: 'Please enter a phone number or email.',
+  contactFormat: 'Please enter a phone number or an email address.',
+  town: 'Please choose a town.',
+  tooLong: 'That’s too long.',
+} as const;
+
 export const OTHER_TOWN = 'Somewhere else';
 
 /** Max lengths, enforced in the browser by maxlength and again on the server. */
@@ -35,4 +44,41 @@ export const HONEYPOT_FIELD = 'website';
 
 export function townOptions(): string[] {
   return [...allTowns(), OTHER_TOWN];
+}
+
+// Zod 4's default email pattern (z.regexes.email), so the browser bundle
+// doesn't need Zod; tests/contact-schema.test.ts fails if the two disagree.
+const EMAIL =
+  /^(?:[A-Za-z0-9_'+-]+\.)*[A-Za-z0-9_'+-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9-]*\.)+[A-Za-z]{2,}$/;
+
+export function isEmail(value: string): boolean {
+  return EMAIL.test(value);
+}
+
+/** US or international numbers: digits plus common punctuation, 7–15 digits. */
+export function isPhone(value: string): boolean {
+  if (!/^[0-9+().\s-]+$/.test(value)) return false;
+  const digits = value.replace(/\D/g, '').length;
+  return digits >= 7 && digits <= 15;
+}
+
+/**
+ * The checks a visitor can fix before sending: required fields and the
+ * shape of the contact field. The browser runs them on submit; the server
+ * schema runs the same ones (plus lengths and the town list) on every post.
+ */
+export function fieldError(field: string, value: string): string | undefined {
+  const trimmed = value.trim();
+  switch (field) {
+    case 'name':
+      return trimmed ? undefined : FIELD_MESSAGES.name;
+    case 'contact':
+      if (!trimmed) return FIELD_MESSAGES.contact;
+      if (isEmail(trimmed) || isPhone(trimmed)) return undefined;
+      return FIELD_MESSAGES.contactFormat;
+    case 'town':
+      return trimmed ? undefined : FIELD_MESSAGES.town;
+    default:
+      return undefined;
+  }
 }

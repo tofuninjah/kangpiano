@@ -3,7 +3,7 @@
 // the visitor's address goes in Reply-To when they gave an email.
 import { Resend } from 'resend';
 import type { ContactRequest } from './contact-schema';
-import { isEmail } from './contact-schema';
+import { isEmail } from './contact';
 
 export interface OutgoingEmail {
   subject: string;
