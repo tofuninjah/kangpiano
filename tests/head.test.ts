@@ -1,6 +1,6 @@
 // What the pages tell browsers and search engines: structured data built
-// from the site and schedule data, social tags, icons, the CSP config, and a
-// robots.txt that keeps the noindex pages crawlable.
+// from the site and schedule data, social tags, canonical URLs, icons and the
+// CSP config. Sitemap and robots.txt are in seo.test.ts.
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 import config from '../astro.config.mjs';
@@ -12,15 +12,20 @@ import {
 } from '../src/lib/structured-data';
 import IndexPage from '../src/pages/index.astro';
 import RequestSent from '../src/pages/request-sent.astro';
-import robots from '../public/robots.txt?raw';
 
+const siteUrl = config.site!;
 let home: string;
 let resultPage: string;
 
 beforeAll(async () => {
-  const container = await AstroContainer.create();
+  const container = await AstroContainer.create({
+    astroConfig: { site: siteUrl },
+  });
   home = await container.renderToString(IndexPage);
-  resultPage = await container.renderToString(RequestSent);
+  // The container renders at "/" unless told the page's URL.
+  resultPage = await container.renderToString(RequestSent, {
+    request: new Request(`${siteUrl}/request-sent`),
+  });
 });
 
 function jsonLd(html: string): unknown[] {
@@ -41,7 +46,7 @@ describe('structured data', () => {
   });
 
   it('is rendered once on the home page and nowhere else', () => {
-    expect(jsonLd(home)).toEqual([localBusinessJsonLd()]);
+    expect(jsonLd(home)).toEqual([localBusinessJsonLd(`${siteUrl}/`)]);
     expect(jsonLd(resultPage)).toEqual([]);
   });
 
@@ -67,10 +72,15 @@ describe('head tags', () => {
     }
   });
 
-  it('leaves out absolute-URL tags until a site domain is set', () => {
-    expect(config.site).toBeUndefined();
-    expect(home).not.toContain('rel="canonical"');
-    expect(home).not.toContain('og:url');
+  it('points canonical and og:url at the production domain', () => {
+    expect(siteUrl).toBe('https://www.kangpiano.com');
+    for (const [page, url] of [
+      [home, `${siteUrl}/`],
+      [resultPage, `${siteUrl}/request-sent`],
+    ] as const) {
+      expect(page).toContain(`<link rel="canonical" href="${url}">`);
+      expect(page).toContain(`<meta property="og:url" content="${url}">`);
+    }
   });
 });
 
@@ -92,13 +102,5 @@ describe('content security policy', () => {
 
   it('never allows unsafe-inline or unsafe-eval', () => {
     expect(directives.join(' ')).not.toMatch(/unsafe-(inline|eval)/);
-  });
-});
-
-describe('robots.txt', () => {
-  it('lets crawlers in, including the noindex result pages', () => {
-    expect(robots).toMatch(/^User-agent: \*$/m);
-    expect(robots).toMatch(/^Allow: \/$/m);
-    expect(robots).not.toMatch(/^Disallow:/m);
   });
 });

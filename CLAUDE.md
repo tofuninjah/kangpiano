@@ -19,9 +19,9 @@ One-page site for Hyejeong Kang's private piano and violin lessons on Oʻahu. Re
 
 ## Deploy and env
 
-- Vercel. Security headers live in `vercel.json` (from `global-claude-config/templates/astro-vercel`); HSTS has no `preload` because the domain isn't settled. The enforced script/style CSP is Astro's `security.csp` `<meta>` (hashes, no `unsafe-inline`); `frame-ancestors`, `base-uri`, `object-src` and `form-action` are also sent as a header from `vercel.json`. The template's report-only policy was dropped: it was looser than the enforced one, had nowhere to report, and logged a console error on every page.
+- Vercel. Security headers live in `vercel.json` (from `global-claude-config/templates/astro-vercel`); HSTS has no `preload` yet: it's hard to undo, so add it only once kangpiano.com and every subdomain are HTTPS-only for good. The enforced script/style CSP is Astro's `security.csp` `<meta>` (hashes, no `unsafe-inline`); `frame-ancestors`, `base-uri`, `object-src` and `form-action` are also sent as a header from `vercel.json`. The template's report-only policy was dropped: it was looser than the enforced one, had nowhere to report, and logged a console error on every page.
 - `astro preview` doesn't work with `@astrojs/vercel`. To check the CSP, build and serve `.vercel/output/static` with any static server; the CSP isn't applied in `npm run dev`.
-- No production domain yet. pianokang.com now belongs to someone else: never use it in code, links, or email addresses.
+- Production is https://www.kangpiano.com (kangpiano.com redirects to it), Vercel project `ailuro-tech/kangpiano`. DNS is at Namecheap, which also forwards the domain's email. pianokang.com belongs to someone else: never use it in code, links, or email addresses.
 - Secrets go in Vercel env vars, with names in `.env.example`. Read server secrets through `process.env`; Astro inlines `import.meta.env` at build time.
 
 ## Design and content
@@ -37,6 +37,7 @@ One-page site for Hyejeong Kang's private piano and violin lessons on Oʻahu. Re
 - Astro ≥7.2.8 and sharp ≥0.35.4 are the floor for the GHSA-26w7-cxv4-gfx2 image RCE fix. `overrides.sharp` keeps Astro from loading an older nested copy.
 - `overrides` also pins `path-to-regexp` 6.3.0 and `zod` to our own version: `@astrojs/vercel`'s dependencies pin vulnerable exact versions (ReDoS, Zod memory exhaustion). The remaining moderate glob/minimatch advisories are build-time only and need majors the adapter doesn't support.
 - The contact rate limit (5 per 10 minutes per IP) lives in memory per serverless instance. Move it to Upstash if spam gets through.
-- When the domain is chosen: set `site` and `security.allowedDomains` in `astro.config.mjs`, verify the domain in Resend, and point `CONTACT_FORM_FROM_EMAIL` at it.
+- `site` drives canonical and og:url tags, the JSON-LD url, `sitemap.xml` and `robots.txt` (both generated in `src/pages`). `trailingSlash: 'never'` must match `vercel.json`, or canonical URLs point at a redirect. `security.allowedDomains` stays unset on purpose (see `astro.config.mjs`).
+- Email still sends from Resend's sandbox address, which only delivers to the Resend account owner. Verify kangpiano.com in Resend, then point `CONTACT_FORM_FROM_EMAIL` at it and `CONTACT_FORM_TO_EMAIL` at Hyejeong's inbox.
 - Status lives in the main checkout's `STATUS.md`; worktree sessions update it with `status-item`.
 - WebKit's `<select>` reports a `style-src-attr` CSP violation from its own shadow tree; the select renders the same either way. `e2e/test.ts` ignores only that case.
