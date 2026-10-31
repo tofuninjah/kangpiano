@@ -2,6 +2,7 @@
 import { Picture } from 'astro:assets';
 import heroImage from '../assets/images/hero-main.jpeg';
 import { site } from '../data/site';
+import { teachingSentence } from '../lib/schedule';
 // Stock photo until Hyejeong supplies one of herself teaching.
 ---
 
@@ -20,9 +21,8 @@ import { site } from '../data/site';
       Piano lessons in your living room,{' '}
       <em class="whitespace-nowrap text-quink">or mine.</em>
     </h1>
-    <p class="max-w-[35rem] text-lead-sm md:text-lead">
-      I teach at your home in ʻEwa Beach and Kapolei, and at my home in
-      Mililani.
+    <p class="max-w-[35rem] text-lead-sm md:text-lead" data-teaching>
+      {teachingSentence()}
     </p>
     <!-- Phones get these two actions from the sticky CallBar instead. -->
     <div class="hidden items-center gap-7 pt-2 md:flex">

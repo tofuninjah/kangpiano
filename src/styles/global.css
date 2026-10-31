@@ -37,6 +37,11 @@
   --text-h2: 3.5rem;
   --text-h2--line-height: 3.75rem;
   --text-h2--letter-spacing: -0.02em;
+  --text-h2-sm: 2.5rem;
+  --text-h2-sm--line-height: 2.75rem;
+  --text-h2-sm--letter-spacing: -0.02em;
+  --text-numeral: 2.5rem;
+  --text-numeral--line-height: 3rem;
   --text-quote: 2.75rem;
   --text-quote--line-height: 3.375rem;
   --text-quote--letter-spacing: -0.015em;

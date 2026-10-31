@@ -1,0 +1,24 @@
+---
+// "ʻEwa Beach · Kapolei" visually; screen readers hear a comma instead of
+// the middle dot. data-town marks each name for the content tests.
+interface Props {
+  towns: readonly string[];
+  class?: string;
+}
+
+const { towns, class: className } = Astro.props;
+---
+
+<p class={className} data-towns>
+  {towns.map((town, index) => (
+    <>
+      {index > 0 && (
+        <>
+          <span aria-hidden="true"> · </span>
+          <span class="sr-only">, </span>
+        </>
+      )}
+      <span data-town>{town}</span>
+    </>
+  ))}
+</p>

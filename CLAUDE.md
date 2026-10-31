@@ -12,6 +12,7 @@ One-page site for Hyejeong Kang's private piano and violin lessons on Oʻahu. Re
 - `npm run dev`: local dev server
 - `npm run build` / `npm run preview`
 - `npm run check`: `astro check` (types)
+- `npm test`: Vitest; renders components with Astro's Container API
 - `npm run lint`, `npm run format`, `npm run format:check`
 
 ## Deploy and env
@@ -23,7 +24,7 @@ One-page site for Hyejeong Kang's private piano and violin lessons on Oʻahu. Re
 ## Design and content
 
 - Source design: Paper file "Kang Piano — Design", page "A — Recital Program" (desktop and mobile). Take exact values with Paper `get_jsx` / `get_computed_styles`, not screenshots.
-- Schedule: Tue and Thu at the student's home in ʻEwa Beach and Kapolei; Wed and Fri at her home in Mililani. Lessons by appointment.
+- Where and when she teaches lives only in `src/data/schedule.ts`. The schedule section, hero sentence, meta description and footer render from it, and `tests/schedule.test.ts` fails if any page copy names a town or day the data doesn't have. Change the data, not the copy.
 - No rates on the site until her 2027 prices are set.
 - Hawaiian spelling: ʻokina is U+02BB (Oʻahu, ʻEwa Beach); keep kahakō (Wahiawā).
 

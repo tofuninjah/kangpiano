@@ -1,5 +1,6 @@
 ---
 import { site } from '../data/site';
+import TownList from './TownList.astro';
 ---
 
 <footer class="bg-ink">
@@ -7,7 +8,7 @@ import { site } from '../data/site';
     <p class="font-serif text-wordmark-sm text-plaster">
       {site.name} <span class="text-stone italic">{site.instruments}</span>
     </p>
-    <p class="text-small text-stone">{site.towns.join(' · ')}</p>
+    <TownList towns={site.towns} class="text-small text-stone" />
     <a
       href={site.phone.href}
       class="text-small text-plaster underline-offset-4 hover:underline"
