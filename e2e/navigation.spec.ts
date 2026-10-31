@@ -183,6 +183,34 @@ test.describe('language link', () => {
   });
 });
 
+test('footer links are 44px tall on phones', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'The 44px minimum applies below 768px');
+  const heights = await page
+    .getByRole('contentinfo')
+    .getByRole('link')
+    .evaluateAll((links) =>
+      links.map((link) => link.getBoundingClientRect().height)
+    );
+  expect(heights.length).toBe(2);
+  for (const height of heights) expect(height).toBeGreaterThanOrEqual(44);
+});
+
+test('on desktop the language link looks unlike the section links', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'The section links show from 1024px');
+  const color = (locator: ReturnType<Page['locator']>) =>
+    locator.evaluate((el) => getComputedStyle(el).color);
+  const section = page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Lessons' });
+  const language = page
+    .getByRole('banner')
+    .getByRole('link', { name: '한국어', exact: true });
+  expect(await color(language)).not.toBe(await color(section));
+});
+
 test('the footer links to the other language too', async ({ page }) => {
   await page
     .getByRole('contentinfo')

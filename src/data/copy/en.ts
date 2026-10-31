@@ -44,9 +44,9 @@ const lessons: readonly Lesson[] = [
       ]
     : []),
   {
-    title: 'Lessons in English or Korean',
+    title: 'In English or Korean',
     detail:
-      'Hyejeong teaches in either language, and parents can talk with her in Korean.',
+      'Learn in whichever language is easier for the student, and talk with me in Korean if you prefer.',
   },
 ];
 

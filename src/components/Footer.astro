@@ -24,17 +24,18 @@ const text = copy[locale];
       towns={site.towns.map((town) => ({ name: text.townName(town) }))}
       class="text-small text-stone"
     />
+    {/* Phones: both links are 44px tall, the project's mobile target size. */}
     <div class="flex items-center gap-6">
       <a
         href={site.phone.href}
-        class="text-small text-plaster underline-offset-4 hover:underline focus-visible:outline-plaster"
+        class="inline-flex items-center text-small text-plaster underline-offset-4 hover:underline focus-visible:outline-plaster max-md:min-h-11"
       >
         {site.phone.display}
       </a>
       <LanguageLink
         locale={locale}
         path={path}
-        class="text-small text-plaster underline-offset-4 hover:underline focus-visible:outline-plaster"
+        class="inline-flex items-center text-small text-plaster underline-offset-4 hover:underline focus-visible:outline-plaster max-md:min-h-11"
       />
     </div>
   </div>

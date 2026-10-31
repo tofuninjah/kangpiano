@@ -84,6 +84,23 @@ test.describe('Korean page', () => {
     expect(new Set(styles)).toEqual(new Set(['normal']));
   });
 
+  test('marks heading emphasis with a color of its own instead', async ({
+    page,
+  }) => {
+    const same = await page
+      .locator('main :is(h1, h2) em')
+      .evaluateAll((ems) =>
+        ems
+          .filter(
+            (em) =>
+              getComputedStyle(em).color ===
+              getComputedStyle(em.parentElement!).color
+          )
+          .map((em) => em.textContent?.trim())
+      );
+    expect(same).toEqual([]);
+  });
+
   test('opens up line height for Hangul headings', async ({ page }) => {
     expect(await lineHeightRatio(page, 'h1')).toBeGreaterThanOrEqual(1.2);
     expect(await lineHeightRatio(page, 'h2')).toBeGreaterThanOrEqual(1.2);

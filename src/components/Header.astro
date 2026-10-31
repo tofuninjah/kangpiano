@@ -49,11 +49,16 @@ const nav = site.navSections.map((section) => ({
         </ul>
       </nav>
 
-      {/* Shown at every width, so phone visitors find it without the menu. */}
+      {/*
+        Shown at every width, so phone visitors find it without the menu.
+        Beside the section links on desktop, a rule and the softer grey mark
+        it as a switch of page, not a fifth section.
+      */}
+      <span aria-hidden="true" class="hidden h-5 w-px bg-staff lg:block"></span>
       <LanguageLink
         locale={locale}
         path={path}
-        class="inline-flex h-11 items-center text-base/5 whitespace-nowrap text-ink underline-offset-4 hover:underline"
+        class="inline-flex h-11 items-center text-base/5 whitespace-nowrap text-ink underline-offset-4 hover:underline lg:text-pencil lg:hover:text-ink"
       />
 
       <a

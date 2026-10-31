@@ -184,10 +184,14 @@ body:has(form :is(input, select, textarea):focus) [data-callbar] {
   display: none;
 }
 
-/* Korean emphasis stays upright (see the :lang(ko) block) and may wrap: it
-   runs longer than the English tails that headings keep on one line with
-   whitespace-nowrap. Unlayered on purpose: it has to beat those utilities. */
+/* Korean emphasis stays upright (Hangul has no true italic), so color
+   carries it instead: the hero's blue by default, and whatever a section
+   sets in --korean-emphasis (the lighter blue on dark backgrounds). It may
+   also wrap: it runs longer than the English tails that headings keep on
+   one line with whitespace-nowrap. Unlayered on purpose: it has to beat
+   those utilities. */
 :lang(ko) em {
   font-style: normal;
   white-space: normal;
+  color: var(--korean-emphasis, var(--color-quink));
 }
