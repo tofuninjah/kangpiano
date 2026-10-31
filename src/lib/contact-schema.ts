@@ -1,7 +1,14 @@
-// Server-side validation for the contact form. Field names and limits come
-// from ./contact so the form markup and this schema can't drift apart.
+// Server-side validation for the contact form. Field names, limits, messages
+// and the phone/email checks come from ./contact, so the form markup, the
+// browser script and this schema can't drift apart.
 import { z } from 'zod';
-import { CONTACT_LIMITS, townOptions } from './contact';
+import {
+  CONTACT_LIMITS,
+  FIELD_MESSAGES,
+  isEmail,
+  isPhone,
+  townOptions,
+} from './contact';
 
 /** The fields the endpoint accepts. Anything else in the body is ignored. */
 export const CONTACT_FIELDS = [
@@ -34,36 +41,23 @@ const multiLine = (value: string) =>
     .replace(CONTROL_EXCEPT_NEWLINE_TAB, '')
     .trim();
 
-const emailCheck = z.email();
-
-export function isEmail(value: string): boolean {
-  return emailCheck.safeParse(value).success;
-}
-
-/** US or international numbers: digits plus common punctuation, 7–15 digits. */
-export function isPhone(value: string): boolean {
-  if (!/^[0-9+().\-\s]+$/.test(value)) return false;
-  const digits = value.replace(/\D/g, '').length;
-  return digits >= 7 && digits <= 15;
-}
-
 const text = (max: number, clean: (value: string) => string) =>
-  z.string().transform(clean).pipe(z.string().max(max, 'That’s too long.'));
+  z.string().transform(clean).pipe(z.string().max(max, FIELD_MESSAGES.tooLong));
 
 export const contactSchema = z.object({
   name: text(CONTACT_LIMITS.name, singleLine).pipe(
-    z.string().min(1, 'Please enter your name.')
+    z.string().min(1, FIELD_MESSAGES.name)
   ),
   contact: text(CONTACT_LIMITS.contact, singleLine)
-    .pipe(z.string().min(1, 'Please enter a phone number or email.'))
+    .pipe(z.string().min(1, FIELD_MESSAGES.contact))
     .refine(
       (value) => isEmail(value) || isPhone(value),
-      'Please enter a phone number or an email address.'
+      FIELD_MESSAGES.contactFormat
     ),
   age: text(CONTACT_LIMITS.age, singleLine),
   town: text(100, singleLine).refine(
     (value) => townOptions().includes(value),
-    'Please choose a town.'
+    FIELD_MESSAGES.town
   ),
   message: text(CONTACT_LIMITS.message, multiLine),
 });

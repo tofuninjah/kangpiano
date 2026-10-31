@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { CONTACT_LIMITS, OTHER_TOWN } from '../src/lib/contact';
-import { isPhone, parseContact } from '../src/lib/contact-schema';
+import { z } from 'zod';
+import {
+  CONTACT_LIMITS,
+  fieldError,
+  isEmail,
+  isPhone,
+  OTHER_TOWN,
+} from '../src/lib/contact';
+import { CONTACT_FIELDS, parseContact } from '../src/lib/contact-schema';
 
 const valid = {
   name: 'Test Parent',
@@ -127,5 +134,78 @@ describe('isPhone', () => {
     expect(isPhone('371-0708')).toBe(true);
     expect(isPhone('371-070')).toBe(false);
     expect(isPhone('808-371-0708 ext 2')).toBe(false);
+  });
+});
+
+describe('isEmail', () => {
+  it('is Zod’s own email check, so the browser and server agree', () => {
+    // The boundaries the pattern encodes, so a change to Zod's default
+    // pattern in either direction shows up here.
+    for (const value of [
+      'parent@example.com',
+      "o'neil+piano@example.co.uk",
+      'A.B_C-d@Sub-domain.Example.COM',
+      'a@b',
+      'a@b.c',
+      'a@b.12',
+      '.lead@example.com',
+      'trail.@example.com',
+      'x..y@example.com',
+      'a@-example.com',
+      'a@example-.com',
+      'a@example..com',
+      'ana silva@example.com',
+      ' parent@example.com',
+      'parent@example.com ',
+      'parent@exämple.com',
+      'pärent@example.com',
+      'parent@',
+      '@example.com',
+      '',
+    ]) {
+      expect(isEmail(value), JSON.stringify(value)).toBe(
+        z.email().safeParse(value).success
+      );
+    }
+  });
+});
+
+describe('fieldError', () => {
+  // Every case the browser can judge must get the same answer the server
+  // gives, in both directions: a value the browser lets through that the
+  // server rejects would send the visitor on a pointless round trip, and
+  // one the browser rejects that the server accepts would block a real
+  // request.
+  const cases: Record<string, string[]> = {
+    name: ['', '   ', '\t', 'Test Parent'],
+    contact: [
+      '',
+      ' ',
+      'hello',
+      'a@b',
+      '1'.repeat(16),
+      'parent@example.com',
+      ' (808) 371-0708 ',
+    ],
+    town: ['', 'Kapolei', OTHER_TOWN],
+    age: ['', '7'],
+    message: ['', 'Hello'],
+  };
+
+  it('matches the server’s answer for every field it checks', () => {
+    for (const field of CONTACT_FIELDS) {
+      for (const value of cases[field]!) {
+        const result = parseContact(form({ ...valid, [field]: value }));
+        const server = result.ok ? undefined : result.errors[field];
+        expect(
+          fieldError(field, value),
+          `${field}: ${JSON.stringify(value)}`
+        ).toBe(server);
+      }
+    }
+  });
+
+  it('ignores fields it does not know about', () => {
+    expect(fieldError('website', '')).toBeUndefined();
   });
 });

@@ -8,7 +8,7 @@ const describedBy = (id: string, hint = false) =>
   [hint && `${id}-hint`, `${id}-error`].filter(Boolean).join(' ');
 
 const control =
-  'h-14 w-full rounded-sm border border-field bg-paper px-4 text-base text-ink user-invalid:border-error aria-[invalid=true]:border-error';
+  'h-14 w-full rounded-sm border border-field bg-paper px-4 text-base text-ink in-[form:not([novalidate])]:user-invalid:border-error aria-[invalid=true]:border-error';
 ---
 
 <section
@@ -169,10 +169,12 @@ const control =
 </section>
 
 <script>
-  // Progressive enhancement: without this script the form posts normally and
-  // lands on /request-sent or /request-not-sent. With it, the request goes
-  // in the background and errors show next to their fields.
-  import { CONTACT_MESSAGES } from '../lib/contact';
+  // Progressive enhancement: without this script the form posts normally,
+  // the browser's own required checks run, and the post lands on
+  // /request-sent or /request-not-sent. With it, the fields are checked here
+  // first, with errors next to the fields instead of the browser's bubbles,
+  // and the request goes in the background.
+  import { CONTACT_MESSAGES, fieldError } from '../lib/contact';
 
   const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
   const status = document.getElementById('contact-status');
@@ -181,21 +183,39 @@ const control =
   );
 
   if (form && status && button) {
+    // The script takes over from the browser's bubbles; the `required`
+    // attributes stay for the no-JavaScript post.
+    form.noValidate = true;
     const idleLabel = button.textContent;
     let sending = false;
+    // Fields are checked as they're left only after a first send attempt, so
+    // nobody is told off for tabbing through an empty form.
+    let attempted = false;
+
+    type Field = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    const isField = (target: unknown): target is Field =>
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLSelectElement ||
+      target instanceof HTMLTextAreaElement;
 
     const setStatus = (message: string, tone: 'success' | 'error') => {
       status.dataset.tone = tone;
       status.textContent = message;
     };
 
+    const setError = (control: Element, message: string | undefined) => {
+      const slot = document.getElementById(`${control.id}-error`);
+      if (slot) {
+        slot.textContent = message ?? '';
+        slot.hidden = !message;
+      }
+      if (message) control.setAttribute('aria-invalid', 'true');
+      else control.removeAttribute('aria-invalid');
+    };
+
     const clearErrors = () => {
       for (const control of form.querySelectorAll('[aria-invalid]')) {
-        control.removeAttribute('aria-invalid');
-      }
-      for (const slot of form.querySelectorAll<HTMLElement>('[id$="-error"]')) {
-        slot.hidden = true;
-        slot.textContent = '';
+        setError(control, undefined);
       }
     };
 
@@ -204,39 +224,62 @@ const control =
       for (const [field, message] of Object.entries(errors)) {
         const control = form.elements.namedItem(field);
         if (!(control instanceof HTMLElement)) continue;
-        const slot = document.getElementById(`${control.id}-error`);
-        if (slot) {
-          slot.textContent = message;
-          slot.hidden = false;
-        }
-        control.setAttribute('aria-invalid', 'true');
+        setError(control, message);
         first ??= control;
       }
       first?.focus();
     };
 
-    // Editing a field the server flagged clears its error right away.
+    /** The checks the visitor can fix here, in field order. */
+    const checkFields = (): Record<string, string> => {
+      const errors: Record<string, string> = {};
+      for (const control of form.elements) {
+        if (!isField(control) || !control.name) continue;
+        const message = fieldError(control.name, control.value);
+        if (message) errors[control.name] = message;
+      }
+      return errors;
+    };
+
+    // Editing a flagged field keeps its message current and clears it as
+    // soon as the value passes; errors only the server can judge clear on
+    // any edit. Nothing changes while a request is in flight, so the answer
+    // lands on a clean form.
     form.addEventListener('input', (event) => {
       const control = event.target;
-      if (!(control instanceof HTMLElement)) return;
+      if (sending || !isField(control)) return;
       if (!control.hasAttribute('aria-invalid')) return;
-      control.removeAttribute('aria-invalid');
-      const slot = document.getElementById(`${control.id}-error`);
-      if (slot) {
-        slot.hidden = true;
-        slot.textContent = '';
-      }
+      setError(control, fieldError(control.name, control.value));
+    });
+
+    // After a first attempt, leaving a field that's still wrong flags it.
+    // Not when the whole window loses focus: the visitor may be mid-typing.
+    form.addEventListener('focusout', (event) => {
+      const control = event.target;
+      if (!attempted || sending || !isField(control)) return;
+      if (!document.hasFocus()) return;
+      const message = fieldError(control.name, control.value);
+      if (message) setError(control, message);
     });
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (sending) return;
+      attempted = true;
+      status.textContent = '';
+      clearErrors();
+
+      const errors = checkFields();
+      if (Object.keys(errors).length > 0) {
+        setStatus(CONTACT_MESSAGES.checkFields, 'error');
+        showErrors(errors);
+        return;
+      }
+
       sending = true;
       // aria-disabled rather than disabled, so focus stays on the button.
       button.setAttribute('aria-disabled', 'true');
       button.textContent = 'Sending…';
-      status.textContent = '';
-      clearErrors();
 
       try {
         const response = await fetch(form.action, {
@@ -252,6 +295,7 @@ const control =
 
         if (response.ok && result?.ok) {
           form.reset();
+          attempted = false;
           setStatus(CONTACT_MESSAGES.success, 'success');
         } else {
           setStatus(result?.message ?? CONTACT_MESSAGES.sendFailed, 'error');

@@ -5,7 +5,7 @@ One-page site for Hyejeong Kang's private piano and violin lessons on Oʻahu. Re
 ## Stack
 
 - Astro 7.3 with `@astrojs/vercel`: every page is prerendered; only `src/pages/api/contact.ts` (`prerender = false`) runs on demand. Tailwind 4 via `@tailwindcss/vite`, TypeScript 5.9 strict.
-- Contact form: Zod schema (`src/lib/contact-schema.ts`), handler (`src/lib/contact-handler.ts`), Resend sender (`src/lib/contact-email.ts`). Length limits, the rate limit, the honeypot name, town options and visitor-facing messages live in `src/lib/contact.ts`, shared by markup, browser script and server; the accepted field names are `CONTACT_FIELDS` in the schema.
+- Contact form: Zod schema (`src/lib/contact-schema.ts`), handler (`src/lib/contact-handler.ts`), Resend sender (`src/lib/contact-email.ts`). Length limits, the rate limit, the honeypot name, town options, visitor-facing messages and the required/phone/email checks (`fieldError`) live in `src/lib/contact.ts`, shared by markup, browser script and server; the browser runs `fieldError` before sending and the server runs it again inside the schema; the accepted field names are `CONTACT_FIELDS` in the schema.
 - Node 22.x (`engines`), npm. ESLint 9 flat config, Prettier with `prettier-plugin-astro`.
 
 ## Commands
