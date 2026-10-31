@@ -1,0 +1,27 @@
+---
+// Label, the control (slot), an optional hint and an error slot. The control
+// must use id={id} and aria-describedby={describedBy(id, hint)}.
+interface Props {
+  id: string;
+  label: string;
+  optional?: boolean;
+  hint?: string;
+  class?: string;
+}
+
+const { id, label, optional = false, hint, class: className } = Astro.props;
+---
+
+<div class:list={['flex flex-col gap-2', className]}>
+  <label for={id} class="text-small font-semibold text-ink">
+    {label}
+    {optional && <span class="font-normal text-pencil"> (optional)</span>}
+  </label>
+  <slot />
+  {hint && (
+    <p id={`${id}-hint`} class="text-small text-pencil">
+      {hint}
+    </p>
+  )}
+  <p id={`${id}-error`} class="text-small font-semibold text-error" hidden></p>
+</div>

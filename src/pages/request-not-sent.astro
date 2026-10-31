@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FormResult from '../components/FormResult.astro';
+import { site } from '../data/site';
+---
+
+<BaseLayout title={`Request not sent · ${site.title}`} noindex>
+  <FormResult
+    eyebrow="Request not sent"
+    heading="Sorry, your request didn’t go through."
+    body="Please go back and check the form, or give me a call instead."
+  />
+</BaseLayout>

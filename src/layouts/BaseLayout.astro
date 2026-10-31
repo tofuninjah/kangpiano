@@ -1,0 +1,91 @@
+---
+// Fonts are self-hosted through Fontsource. Each CSS file declares latin,
+// latin-ext and vietnamese faces with unicode-range, so browsers download
+// only the subsets a page uses. Latin covers the ʻokina (U+02BB); kahakō
+// vowels such as ā pull in latin-ext.
+import '@fontsource-variable/newsreader/opsz.css';
+import '@fontsource-variable/newsreader/opsz-italic.css';
+import '@fontsource-variable/hanken-grotesk/wght.css';
+import newsreaderLatin from '@fontsource-variable/newsreader/files/newsreader-latin-opsz-normal.woff2?url';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CallBar from '../components/CallBar.astro';
+import { site } from '../data/site';
+import { toJsonLdScript } from '../lib/structured-data';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Keep utility pages (form results) out of search results. */
+  noindex?: boolean;
+  /** schema.org data rendered as JSON-LD (the home page passes it). */
+  structuredData?: unknown;
+}
+
+const {
+  title = site.title,
+  description = site.description,
+  noindex = false,
+  structuredData,
+} = Astro.props;
+
+// Absolute URLs need `site`, which waits on the domain; until then these
+// tags are simply left out.
+const canonical = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : undefined;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f4f1ea" />
+    {noindex && <meta name="robots" content="noindex" />}
+    {canonical && <link rel="canonical" href={canonical} />}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.title} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content="en_US" />
+    {canonical && <meta property="og:url" content={canonical} />}
+    <meta name="twitter:card" content="summary" />
+    {structuredData !== undefined && (
+      <script
+        is:inline
+        type="application/ld+json"
+        set:html={toJsonLdScript(structuredData)}
+      />
+    )}
+    <!-- The hero headline is set in Newsreader; preload it to avoid a late swap. -->
+    <link
+      rel="preload"
+      href={newsreaderLatin}
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+  </head>
+  <!-- Bottom padding on phones reserves room for the fixed CallBar (77px + safe area). -->
+  <body class="flex min-h-dvh flex-col bg-plaster pb-[calc(4.8125rem+env(safe-area-inset-bottom))] text-ink md:pb-0">
+    <a
+      href="#main"
+      class="sr-only rounded-full bg-quink text-ui font-semibold text-paper focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-5 focus:py-3"
+    >
+      Skip to content
+    </a>
+    <Header />
+    <main id="main" tabindex="-1" class="flex-1 focus:outline-none">
+      <slot />
+    </main>
+    <Footer />
+    <CallBar />
+  </body>
+</html>

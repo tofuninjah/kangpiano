@@ -1,0 +1,30 @@
+# From global-claude-config/templates/github/dependabot.yml.
+# Groups routine updates into one weekly PR; security patches come through
+# on their own so they stand out.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      routine:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+    ignore:
+      # Majors land on your schedule, not Dependabot's.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+      # Held on 7.3.x: 7.4 raises the Node floor to 22.23.4 (see CLAUDE.md).
+      # Lift this once Vercel's Node 22 runtime is confirmed to meet it.
+      - dependency-name: 'astro'
+        update-types: ['version-update:semver-minor']
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1

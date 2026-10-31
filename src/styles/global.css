@@ -1,0 +1,144 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens from Paper, "Kang Piano — Design", page "A — Recital Program".
+ * Mood: bookish (studio plaster, sheet-music ink, a fountain-pen blue).
+ */
+@theme {
+  --color-plaster: #f4f1ea;
+  --color-paper: #ffffff;
+  --color-ink: #1c2230;
+  --color-quink: #24407a;
+  --color-quink-light: #8fa4d6;
+  --color-pencil: #5e5a52;
+  --color-staff: #d9d3c6;
+  --color-stone: #b9b2a3;
+  --color-ink-rule: #3a4152;
+  --color-portrait: #e6e0d3;
+  /* Form field borders: stone deepened to 3.76:1 on white (WCAG 1.4.11;
+     stone itself is 2.1:1, fine for decorative rules only) */
+  --color-field: #8a8376;
+  /* Form errors only: an editor's red pencil, 7:1 on white */
+  --color-error: #a12a24;
+
+  --font-serif: 'Newsreader Variable', Georgia, 'Times New Roman', serif;
+  --font-sans:
+    'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Display serif sizes (Newsreader, light) */
+  --text-display: 5.5rem;
+  --text-display--line-height: 5.75rem;
+  --text-display--letter-spacing: -0.025em;
+  /* Between Paper's mobile (46px) and desktop (88px) hero sizes */
+  --text-display-lg: 4.5rem;
+  --text-display-lg--line-height: 4.75rem;
+  --text-display-lg--letter-spacing: -0.025em;
+  --text-display-md: 4rem;
+  --text-display-md--line-height: 4.25rem;
+  --text-display-md--letter-spacing: -0.025em;
+  --text-display-sm: 2.875rem;
+  --text-display-sm--line-height: 3.125rem;
+  --text-display-sm--letter-spacing: -0.02em;
+  --text-h2: 3.5rem;
+  --text-h2--line-height: 3.75rem;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2-sm: 2.5rem;
+  --text-h2-sm--line-height: 2.75rem;
+  --text-h2-sm--letter-spacing: -0.02em;
+  --text-numeral: 2.5rem;
+  --text-numeral--line-height: 3rem;
+  --text-quote: 2.75rem;
+  --text-quote--line-height: 3.375rem;
+  --text-quote--letter-spacing: -0.015em;
+  --text-quote-sm: 1.875rem;
+  --text-quote-sm--line-height: 2.375rem;
+  --text-quote-sm--letter-spacing: -0.01em;
+  --text-h3: 2rem;
+  --text-h3--line-height: 2.5rem;
+  --text-item: 1.75rem;
+  --text-item--line-height: 2.125rem;
+  --text-wordmark: 1.625rem;
+  --text-wordmark--line-height: 2rem;
+  --text-wordmark--letter-spacing: -0.01em;
+  --text-wordmark-sm: 1.375rem;
+  --text-wordmark-sm--line-height: 1.75rem;
+  --text-index: 1.25rem;
+  --text-index--line-height: 1.5rem;
+  --text-day: 1.5rem;
+  --text-day--line-height: 1.875rem;
+
+  /* Text sans sizes (Hanken Grotesk) */
+  --text-lead: 1.25rem;
+  --text-lead--line-height: 2rem;
+  --text-lead-sm: 1.0625rem;
+  --text-lead-sm--line-height: 1.6875rem;
+  --text-body: 1.125rem;
+  --text-body--line-height: 1.875rem;
+  --text-ui: 1.0625rem;
+  --text-ui--line-height: 1.375rem;
+  --text-small: 0.9375rem;
+  --text-small--line-height: 1.125rem;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1rem;
+  --text-label--letter-spacing: 0.12em;
+
+  --container-page: 90rem;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-plaster);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: var(--color-quink);
+    color: var(--color-paper);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-quink);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Phones: keep focused and scrolled-to elements clear of the fixed call
+     bar (WCAG 2.4.11). Matches the bar's height in CallBar.astro. */
+  @media (width < 48rem) {
+    html {
+      scroll-padding-bottom: calc(4.8125rem + env(safe-area-inset-bottom));
+    }
+  }
+
+  /* Browsers without the Popover API (iOS 16 and older) ignore the
+     attribute and would render the mobile menu inline and open. Hide it
+     there; the call bar and in-page links still work. */
+  @supports not selector(:popover-open) {
+    [popover] {
+      display: none;
+    }
+  }
+}
+
+/* Without the Popover API the menu above is hidden, so its Menu button would
+   do nothing. Unlayered so it beats the button's inline-flex utility. */
+@supports not selector(:popover-open) {
+  [popovertarget] {
+    display: none;
+  }
+}
+
+/* On phones the fixed call bar can cover the field being typed in once the
+   keyboard is up, so hide it while a form field has focus. Unlayered on
+   purpose: it has to beat the bar's own `flex` utility. */
+body:has(form :is(input, select, textarea):focus) [data-callbar] {
+  display: none;
+}

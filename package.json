@@ -1,31 +1,52 @@
 {
-  "name": "foundation-sites-template",
-  "version": "1.0.0",
-  "description": "Basic template for a new Foundation for Sites project.",
-  "main": "gulpfile.js",
-  "devDependencies": {
-    "gulp": "^3.9.0",
-    "gulp-autoprefixer": "^3.1.0",
-    "gulp-load-plugins": "^1.1.0",
-    "gulp-sass": "^2.1.0"
+  "name": "kangpiano",
+  "version": "2.0.0",
+  "description": "Hyejeong Kang Piano & Violin: private lessons on Oʻahu.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": "22.x"
   },
   "scripts": {
-    "start": "gulp",
-    "build": "gulp sass"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "format": "prettier -w .",
+    "format:check": "prettier -c ."
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/zurb/foundation-sites-template.git"
+  "overrides": {
+    "sharp": "$sharp",
+    "path-to-regexp": "6.3.0",
+    "zod": "$zod"
   },
-  "bugs": {
-    "url": "https://github.com/zurb/foundation-sites/issues",
-    "email": "foundation@zurb.com"
-  },
-  "author": "ZURB <foundation@zurb.com>",
-  "license": "MIT",
-  "private": true,
   "dependencies": {
-    "gulp-autoprefixer": "^3.1.0",
-    "jquery-smooth-scroll": "^1.7.2"
+    "@astrojs/vercel": "^11.0.17",
+    "@fontsource-variable/hanken-grotesk": "^5.3.0",
+    "@fontsource-variable/newsreader": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "~7.3.8",
+    "resend": "^6.37.0",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.3.3",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@axe-core/playwright": "4.14.0",
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "1.64.1",
+    "eslint": "^9.39.5",
+    "eslint-plugin-astro": "^1.7.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-astro": "^1.1.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.0.5"
   }
 }

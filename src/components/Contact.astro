@@ -1,0 +1,269 @@
+---
+import { site } from '../data/site';
+import { CONTACT_LIMITS, HONEYPOT_FIELD, townOptions } from '../lib/contact';
+import FormField from './FormField.astro';
+
+// Each control points at its hint (if any) and its error message slot.
+const describedBy = (id: string, hint = false) =>
+  [hint && `${id}-hint`, `${id}-error`].filter(Boolean).join(' ');
+
+const control =
+  'h-14 w-full rounded-sm border border-field bg-paper px-4 text-base text-ink user-invalid:border-error aria-[invalid=true]:border-error';
+---
+
+<section
+  id="contact"
+  aria-labelledby="contact-heading"
+  class="border-t border-staff bg-paper"
+>
+  <div class="mx-auto flex max-w-page flex-col gap-10 px-5 py-16 md:px-12 md:py-24 lg:flex-row lg:gap-16 xl:gap-24 xl:px-24 xl:py-30">
+    <div class="flex flex-col gap-6 lg:w-[22rem] lg:shrink-0 xl:w-[32.5rem]">
+      <p class="text-label font-semibold text-pencil uppercase">
+        Request a first lesson
+      </p>
+      <h2
+        id="contact-heading"
+        class="font-serif text-h2-sm font-light lg:text-h2"
+      >
+        Let’s find your <em class="whitespace-nowrap">first lesson.</em>
+      </h2>
+      <p class="text-body">
+        Calling is quickest. If it’s easier, send a short note and I’ll get back
+        to you.
+      </p>
+      <div class="flex flex-col gap-1.5 pt-2">
+        <p class="text-label font-semibold text-pencil uppercase">Call</p>
+        <a
+          href={site.phone.href}
+          class="font-serif text-h2-sm text-quink underline-offset-8 hover:underline lg:text-quote"
+        >
+          {site.phone.display}
+        </a>
+      </div>
+    </div>
+
+    <form
+      method="post"
+      action="/api/contact"
+      class="flex flex-1 flex-col gap-5"
+      aria-labelledby="contact-heading"
+      data-contact-form
+    >
+      <div class="flex flex-col gap-5 md:flex-row">
+        <FormField id="contact-name" label="Your name" class="md:flex-1">
+          <input
+            id="contact-name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            required
+            maxlength={CONTACT_LIMITS.name}
+            aria-describedby={describedBy('contact-name')}
+            class={control}
+          />
+        </FormField>
+        <FormField id="contact-reply" label="Phone or email" class="md:flex-1">
+          <input
+            id="contact-reply"
+            name="contact"
+            type="text"
+            required
+            maxlength={CONTACT_LIMITS.contact}
+            aria-describedby={describedBy('contact-reply')}
+            class={control}
+          />
+        </FormField>
+      </div>
+
+      <div class="flex flex-col gap-5 md:flex-row md:items-start">
+        <FormField
+          id="contact-age"
+          label="Student’s age"
+          optional
+          hint="For example, 7 or adult"
+          class="md:flex-1"
+        >
+          <input
+            id="contact-age"
+            name="age"
+            type="text"
+            maxlength={CONTACT_LIMITS.age}
+            aria-describedby={describedBy('contact-age', true)}
+            class={control}
+          />
+        </FormField>
+        <FormField id="contact-town" label="Town" class="md:flex-1">
+          <div class="relative">
+            <select
+              id="contact-town"
+              name="town"
+              required
+              aria-describedby={describedBy('contact-town')}
+              class={`${control} appearance-none pr-10`}
+            >
+              <option value="">Choose a town</option>
+              {townOptions().map((town) => (
+                <option value={town}>{town}</option>
+              ))}
+            </select>
+            <svg
+              aria-hidden="true"
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              class="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-ink"
+            >
+              <path
+                d="M3 5l4 4 4-4"
+                stroke="currentColor"
+                stroke-width="1.5"
+              ></path>
+            </svg>
+          </div>
+        </FormField>
+      </div>
+
+      <FormField id="contact-message" label="Anything I should know?" optional>
+        <textarea
+          id="contact-message"
+          name="message"
+          rows="4"
+          maxlength={CONTACT_LIMITS.message}
+          aria-describedby={describedBy('contact-message')}
+          class={`${control} h-auto min-h-30 resize-y py-3`}
+        ></textarea>
+      </FormField>
+
+      <!-- Honeypot: hidden from people and assistive tech; bots tend to fill it. -->
+      <div
+        aria-hidden="true"
+        class="absolute -left-[9999px] h-px w-px overflow-hidden"
+      >
+        <label for="contact-website">Leave this empty</label>
+        <input
+          id="contact-website"
+          name={HONEYPOT_FIELD}
+          type="text"
+          tabindex="-1"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="flex flex-col gap-4 pt-2 sm:flex-row sm:items-center sm:gap-6">
+        <button
+          type="submit"
+          class="rounded-full bg-quink px-[1.875rem] py-[1.125rem] text-ui font-semibold text-paper transition-colors hover:bg-ink sm:w-fit"
+        >
+          Send request
+        </button>
+        <p class="text-small text-pencil">Used only to reply to you.</p>
+      </div>
+      <p
+        id="contact-status"
+        role="status"
+        class="text-body font-semibold data-[tone=error]:text-error data-[tone=success]:text-quink"
+      ></p>
+    </form>
+  </div>
+</section>
+
+<script>
+  // Progressive enhancement: without this script the form posts normally and
+  // lands on /request-sent or /request-not-sent. With it, the request goes
+  // in the background and errors show next to their fields.
+  import { CONTACT_MESSAGES } from '../lib/contact';
+
+  const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
+  const status = document.getElementById('contact-status');
+  const button = form?.querySelector<HTMLButtonElement>(
+    'button[type="submit"]'
+  );
+
+  if (form && status && button) {
+    const idleLabel = button.textContent;
+    let sending = false;
+
+    const setStatus = (message: string, tone: 'success' | 'error') => {
+      status.dataset.tone = tone;
+      status.textContent = message;
+    };
+
+    const clearErrors = () => {
+      for (const control of form.querySelectorAll('[aria-invalid]')) {
+        control.removeAttribute('aria-invalid');
+      }
+      for (const slot of form.querySelectorAll<HTMLElement>('[id$="-error"]')) {
+        slot.hidden = true;
+        slot.textContent = '';
+      }
+    };
+
+    const showErrors = (errors: Record<string, string>) => {
+      let first: HTMLElement | undefined;
+      for (const [field, message] of Object.entries(errors)) {
+        const control = form.elements.namedItem(field);
+        if (!(control instanceof HTMLElement)) continue;
+        const slot = document.getElementById(`${control.id}-error`);
+        if (slot) {
+          slot.textContent = message;
+          slot.hidden = false;
+        }
+        control.setAttribute('aria-invalid', 'true');
+        first ??= control;
+      }
+      first?.focus();
+    };
+
+    // Editing a field the server flagged clears its error right away.
+    form.addEventListener('input', (event) => {
+      const control = event.target;
+      if (!(control instanceof HTMLElement)) return;
+      if (!control.hasAttribute('aria-invalid')) return;
+      control.removeAttribute('aria-invalid');
+      const slot = document.getElementById(`${control.id}-error`);
+      if (slot) {
+        slot.hidden = true;
+        slot.textContent = '';
+      }
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (sending) return;
+      sending = true;
+      // aria-disabled rather than disabled, so focus stays on the button.
+      button.setAttribute('aria-disabled', 'true');
+      button.textContent = 'Sending…';
+      status.textContent = '';
+      clearErrors();
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body: new FormData(form),
+        });
+        const result = (await response.json().catch(() => null)) as {
+          ok?: boolean;
+          message?: string;
+          errors?: Record<string, string>;
+        } | null;
+
+        if (response.ok && result?.ok) {
+          form.reset();
+          setStatus(CONTACT_MESSAGES.success, 'success');
+        } else {
+          setStatus(result?.message ?? CONTACT_MESSAGES.sendFailed, 'error');
+          if (result?.errors) showErrors(result.errors);
+        }
+      } catch {
+        setStatus(CONTACT_MESSAGES.offline, 'error');
+      } finally {
+        sending = false;
+        button.removeAttribute('aria-disabled');
+        button.textContent = idleLabel;
+      }
+    });
+  }
+</script>

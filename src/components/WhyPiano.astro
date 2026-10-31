@@ -1,0 +1,37 @@
+---
+import { about } from '../data/about';
+
+interface Props {
+  /** Full-width placement: set the text in two columns from 1024px. */
+  wide?: boolean;
+}
+
+const { wide = false } = Astro.props;
+---
+
+<details class="group border-t border-staff pt-6">
+  <summary class="flex w-fit cursor-pointer list-none items-center gap-3 text-base/5 font-semibold text-quink [&::-webkit-details-marker]:hidden">
+    <span class="border-b-[1.5px] border-current pb-1">Why learn piano?</span>
+    <svg
+      aria-hidden="true"
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      class="transition-transform group-open:rotate-45 motion-reduce:transition-none"
+    >
+      <path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.5"></path>
+    </svg>
+  </summary>
+  <div
+    class:list={[
+      'mt-6 text-body [&>p]:mb-5 [&>p]:break-inside-avoid',
+      wide && 'lg:columns-2 lg:gap-16 xl:gap-24',
+    ]}
+    data-why-piano
+  >
+    {about.whyPiano.map((paragraph) => (
+      <p>{paragraph}</p>
+    ))}
+  </div>
+</details>

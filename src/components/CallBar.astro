@@ -1,0 +1,40 @@
+---
+// Phones only. Height is 77px (12 + 52 + 12 + 1px border) plus the bottom
+// safe area; BaseLayout pads <body> by the same amount so the footer is
+// never covered. Change both together. global.css hides it while a form
+// field has focus, so it can't sit over the field being typed in.
+import { site } from '../data/site';
+---
+
+<div
+  data-callbar
+  class="fixed inset-x-0 bottom-0 z-40 flex gap-2.5 border-t border-staff bg-plaster px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden"
+>
+  <a
+    href={site.phone.href}
+    aria-label={`Call now, ${site.phone.display}`}
+    class="flex h-13 flex-1 items-center justify-center gap-2 rounded-full bg-quink text-base/5 font-semibold text-paper"
+  >
+    <svg
+      aria-hidden="true"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linejoin="round"
+      ></path>
+    </svg>
+    Call now
+  </a>
+  <a
+    href="/#contact"
+    class="flex h-13 flex-1 items-center justify-center rounded-full border-[1.5px] border-quink text-base/5 font-semibold text-quink"
+  >
+    Request a lesson
+  </a>
+</div>

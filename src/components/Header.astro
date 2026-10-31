@@ -1,0 +1,141 @@
+---
+import { site } from '../data/site';
+---
+
+<header class="border-b border-staff">
+  <div class="mx-auto flex max-w-page items-center justify-between gap-6 px-5 py-4 md:px-12 md:py-6 lg:py-7 xl:px-24">
+    <a href="/" class="flex items-baseline gap-3.5 whitespace-nowrap text-ink">
+      <span class="font-serif text-wordmark-sm lg:text-wordmark">
+        {site.name}
+      </span>
+      <span class="hidden text-label font-semibold text-pencil uppercase sm:inline">
+        {site.instruments}
+      </span>
+    </a>
+
+    <div class="flex items-center gap-3 lg:gap-6 xl:gap-10">
+      <nav aria-label="Main" class="hidden lg:block">
+        <ul class="flex items-center gap-6 xl:gap-10">
+          {site.nav.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class="text-base/5 text-ink underline-offset-4 hover:underline"
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <a
+        href={site.phone.href}
+        class="hidden rounded-full border-[1.5px] border-quink px-[1.125rem] py-2.5 text-base/5 font-semibold whitespace-nowrap text-quink transition-colors hover:bg-quink hover:text-paper md:inline-flex"
+      >
+        {site.phone.display}
+      </a>
+
+      <button
+        type="button"
+        popovertarget="site-menu"
+        class="-mr-2.5 inline-flex size-11 items-center justify-center text-ink lg:hidden"
+      >
+        <svg
+          aria-hidden="true"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <path
+            d="M4 8h16M4 16h16"
+            stroke="currentColor"
+            stroke-width="1.5"
+          ></path>
+        </svg>
+        <span class="sr-only">Menu</span>
+      </button>
+    </div>
+  </div>
+
+  <!--
+    Native popover: the browser handles Esc, outside-tap dismissal and the
+    top layer without JavaScript. The script below only closes it after a
+    link is chosen, so the page isn't left covered.
+  -->
+  <div
+    id="site-menu"
+    popover
+    class="inset-x-0 top-0 bottom-auto m-0 max-h-dvh w-full max-w-none overflow-y-auto border-0 bg-plaster p-0 text-ink backdrop:bg-ink/40"
+  >
+    <div class="flex items-center justify-between border-b border-staff px-5 py-4 md:px-12 md:py-6">
+      <span class="font-serif text-wordmark-sm">{site.name}</span>
+      <button
+        type="button"
+        popovertarget="site-menu"
+        popovertargetaction="hide"
+        class="-mr-2.5 inline-flex size-11 items-center justify-center text-ink"
+      >
+        <svg
+          aria-hidden="true"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <path
+            d="M6 6l12 12M18 6L6 18"
+            stroke="currentColor"
+            stroke-width="1.5"
+          ></path>
+        </svg>
+        <span class="sr-only">Close menu</span>
+      </button>
+    </div>
+
+    <nav aria-label="Main" class="px-5 pt-2 pb-8 md:px-12">
+      <ul>
+        {site.nav.map((item) => (
+          <li class="border-b border-staff">
+            <a href={item.href} class="block py-4 font-serif text-h3">
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <a
+        href={site.phone.href}
+        class="mt-8 flex h-13 items-center justify-center rounded-full bg-quink text-base/5 font-semibold text-paper"
+      >
+        Call {site.phone.display}
+      </a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const menu = document.getElementById('site-menu');
+  const opener = document.querySelector<HTMLElement>(
+    '[popovertarget="site-menu"]:not([popovertargetaction])'
+  );
+  if (menu) {
+    menu.addEventListener('click', (event) => {
+      if (event.target instanceof Element && event.target.closest('a')) {
+        menu.hidePopover();
+      }
+    });
+
+    // Safari's Tab order skips an open popover, and on close it leaves focus
+    // inside the hidden menu. Move focus in on open, and back to the Menu
+    // button on close if it was left inside (Chromium already does that).
+    menu.addEventListener('toggle', (event) => {
+      if (!(event instanceof ToggleEvent)) return;
+      if (event.newState === 'open') {
+        menu.querySelector<HTMLElement>('button, a')?.focus();
+      } else if (menu.contains(document.activeElement)) {
+        opener?.focus();
+      }
+    });
+  }
+</script>

@@ -1,0 +1,46 @@
+# Format, lint, types, unit tests, build and end-to-end tests. Dependency
+# and secret scanning live in security.yml.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: checks and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # Same as security.yml: dependencies don't get to run install scripts.
+      # sharp, esbuild and Playwright ship prebuilt binaries without them.
+      - run: npm ci --ignore-scripts
+
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run check
+      - run: npm test
+
+      # Playwright's webServer serves this build on CI instead of rebuilding.
+      - run: npm run build
+
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

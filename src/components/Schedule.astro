@@ -1,0 +1,60 @@
+---
+import { locations, scheduleNote } from '../data/schedule';
+import { locationTitle } from '../lib/schedule';
+import TownList from './TownList.astro';
+
+const numerals = ['I.', 'II.', 'III.', 'IV.'];
+---
+
+<section
+  id="schedule"
+  aria-labelledby="schedule-heading"
+  class="mx-auto max-w-page px-5 py-16 md:px-12 md:py-24 xl:px-24 xl:pt-32 xl:pb-28"
+>
+  <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+    <div class="flex flex-col gap-4">
+      <p class="text-label font-semibold text-pencil uppercase">
+        The weekly program
+      </p>
+      <h2
+        id="schedule-heading"
+        class="font-serif text-h2-sm font-light lg:text-h2"
+      >
+        Where I teach, <em class="whitespace-nowrap">and when.</em>
+      </h2>
+    </div>
+    <p class="text-lead-sm text-pencil lg:max-w-[23.75rem]">{scheduleNote}</p>
+  </div>
+
+  <div class="mt-10 grid gap-12 md:mt-14 lg:grid-cols-2 lg:gap-16 xl:gap-24">
+    {locations.map((location, index) => (
+      <article
+        data-location={location.host}
+        aria-labelledby={`location-${location.host}`}
+        class="flex flex-col gap-5"
+      >
+        <div class="flex items-baseline gap-5">
+          <span
+            aria-hidden="true"
+            class="w-12 shrink-0 font-serif text-numeral text-quink italic"
+          >
+            {numerals[index]}
+          </span>
+          <div class="flex flex-col gap-1.5">
+            <h3 id={`location-${location.host}`} class="font-serif text-h3">
+              {locationTitle(location)}
+            </h3>
+            <TownList towns={location.towns} class="text-base/5 text-pencil" />
+          </div>
+        </div>
+        <ul class="flex flex-col pt-3 pl-[4.25rem]" aria-label="Lesson days">
+          {location.days.map((day) => (
+            <li class="border-b border-dotted border-pencil py-4 font-serif text-day">
+              {day}
+            </li>
+          ))}
+        </ul>
+      </article>
+    ))}
+  </div>
+</section>
