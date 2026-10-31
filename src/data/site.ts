@@ -11,4 +11,12 @@ export const site = {
     href: 'tel:+18083710708',
   },
   towns: ['ʻEwa Beach', 'Kapolei', 'Mililani'],
+  // Section anchors on the home page, shared by the desktop nav and the
+  // mobile menu.
+  nav: [
+    { label: 'Where & when', href: '#schedule' },
+    { label: 'Lessons', href: '#lessons' },
+    { label: 'About', href: '#about' },
+    { label: 'Contact', href: '#contact' },
+  ],
 } as const;

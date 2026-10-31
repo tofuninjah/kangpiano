@@ -85,4 +85,13 @@
       scroll-behavior: smooth;
     }
   }
+
+  /* Browsers without the Popover API (iOS 16 and older) ignore the
+     attribute and would render the mobile menu inline and open. Hide it
+     there; the call bar and in-page links still work. */
+  @supports not selector(:popover-open) {
+    [popover] {
+      display: none;
+    }
+  }
 }
