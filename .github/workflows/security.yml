@@ -1,0 +1,51 @@
+# Dependency + secret scanning, from global-claude-config/templates/ci/security-node.yml.
+name: security
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  schedule:
+    # Weekly, so a CVE published against an untouched repo still surfaces.
+    - cron: '0 13 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      # Dev-only advisories are excluded: they don't ship, and failing on
+      # them trains you to ignore this job.
+      - name: npm audit
+        run: npm audit --omit=dev --audit-level=high
+
+  secrets:
+    name: secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: a secret committed and later deleted is still
+          # extractable, so scanning only the tip misses it.
+          fetch-depth: 0
+
+      - name: install gitleaks
+        run: |
+          VERSION=8.30.1
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+
+      - name: scan history
+        run: gitleaks detect --redact --no-banner --exit-code 1

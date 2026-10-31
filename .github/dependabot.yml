@@ -1,0 +1,26 @@
+# From global-claude-config/templates/github/dependabot.yml.
+# Groups routine updates into one weekly PR; security patches come through
+# on their own so they stand out.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      routine:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+    ignore:
+      # Majors land on your schedule, not Dependabot's.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
