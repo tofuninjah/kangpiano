@@ -81,6 +81,20 @@ describe('contact form', () => {
     }
   });
 
+  it('ties every visible control to its error slot, and the age field to its hint', () => {
+    const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
+    const visible = controls(html).filter(
+      (control) => control.name !== HONEYPOT_FIELD
+    );
+    for (const control of visible) {
+      const refs = (control['aria-describedby'] ?? '').split(' ');
+      expect(refs, control.name).toContain(`${control.id}-error`);
+      for (const ref of refs) expect(ids.has(ref), ref).toBe(true);
+    }
+    const age = visible.find((control) => control.name === 'age')!;
+    expect(age['aria-describedby']).toContain('contact-age-hint');
+  });
+
   it('keeps the honeypot hidden and out of the tab order', () => {
     const wrapper = html.match(
       new RegExp(

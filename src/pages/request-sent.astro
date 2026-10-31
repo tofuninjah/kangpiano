@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FormResult from '../components/FormResult.astro';
+import { site } from '../data/site';
+---
+
+<BaseLayout title={`Request sent · ${site.title}`} noindex>
+  <FormResult
+    eyebrow="Request sent"
+    heading="Thank you. Your request is on its way."
+    body="I’ll get back to you soon. If you’d rather talk now, calling is quickest."
+  />
+</BaseLayout>

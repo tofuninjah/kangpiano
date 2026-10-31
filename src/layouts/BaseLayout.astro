@@ -16,9 +16,15 @@ import { site } from '../data/site';
 interface Props {
   title?: string;
   description?: string;
+  /** Keep utility pages (form results) out of search results. */
+  noindex?: boolean;
 }
 
-const { title = site.title, description = site.description } = Astro.props;
+const {
+  title = site.title,
+  description = site.description,
+  noindex = false,
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -29,6 +35,7 @@ const { title = site.title, description = site.description } = Astro.props;
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#f4f1ea" />
+    {noindex && <meta name="robots" content="noindex" />}
     <!-- The hero headline is set in Newsreader; preload it to avoid a late swap. -->
     <link
       rel="preload"

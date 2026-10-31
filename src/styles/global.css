@@ -15,6 +15,9 @@
   --color-stone: #b9b2a3;
   --color-ink-rule: #3a4152;
   --color-portrait: #e6e0d3;
+  /* Form field borders: stone deepened to 3.76:1 on white (WCAG 1.4.11;
+     stone itself is 2.1:1, fine for decorative rules only) */
+  --color-field: #8a8376;
   /* Form errors only: an editor's red pencil, 7:1 on white */
   --color-error: #a12a24;
 
@@ -104,6 +107,14 @@
   @media (prefers-reduced-motion: no-preference) {
     html {
       scroll-behavior: smooth;
+    }
+  }
+
+  /* Phones: keep focused and scrolled-to elements clear of the fixed call
+     bar (WCAG 2.4.11). Matches the bar's height in CallBar.astro. */
+  @media (width < 48rem) {
+    html {
+      scroll-padding-bottom: calc(4.8125rem + env(safe-area-inset-bottom));
     }
   }
 

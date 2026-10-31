@@ -8,7 +8,7 @@ const describedBy = (id: string, hint = false) =>
   [hint && `${id}-hint`, `${id}-error`].filter(Boolean).join(' ');
 
 const control =
-  'h-14 w-full rounded-sm border border-stone bg-paper px-4 text-base text-ink user-invalid:border-error';
+  'h-14 w-full rounded-sm border border-field bg-paper px-4 text-base text-ink user-invalid:border-error aria-[invalid=true]:border-error';
 ---
 
 <section
@@ -47,6 +47,7 @@ const control =
       action="/api/contact"
       class="flex flex-1 flex-col gap-5"
       aria-labelledby="contact-heading"
+      data-contact-form
     >
       <div class="flex flex-col gap-5 md:flex-row">
         <FormField id="contact-name" label="Your name" class="md:flex-1">
@@ -158,7 +159,111 @@ const control =
         </button>
         <p class="text-small text-pencil">Used only to reply to you.</p>
       </div>
-      <p id="contact-status" role="status" class="text-small"></p>
+      <p
+        id="contact-status"
+        role="status"
+        class="text-body font-semibold data-[tone=error]:text-error data-[tone=success]:text-quink"
+      ></p>
     </form>
   </div>
 </section>
+
+<script>
+  // Progressive enhancement: without this script the form posts normally and
+  // lands on /request-sent or /request-not-sent. With it, the request goes
+  // in the background and errors show next to their fields.
+  import { CONTACT_MESSAGES } from '../lib/contact';
+
+  const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
+  const status = document.getElementById('contact-status');
+  const button = form?.querySelector<HTMLButtonElement>(
+    'button[type="submit"]'
+  );
+
+  if (form && status && button) {
+    const idleLabel = button.textContent;
+    let sending = false;
+
+    const setStatus = (message: string, tone: 'success' | 'error') => {
+      status.dataset.tone = tone;
+      status.textContent = message;
+    };
+
+    const clearErrors = () => {
+      for (const control of form.querySelectorAll('[aria-invalid]')) {
+        control.removeAttribute('aria-invalid');
+      }
+      for (const slot of form.querySelectorAll<HTMLElement>('[id$="-error"]')) {
+        slot.hidden = true;
+        slot.textContent = '';
+      }
+    };
+
+    const showErrors = (errors: Record<string, string>) => {
+      let first: HTMLElement | undefined;
+      for (const [field, message] of Object.entries(errors)) {
+        const control = form.elements.namedItem(field);
+        if (!(control instanceof HTMLElement)) continue;
+        const slot = document.getElementById(`${control.id}-error`);
+        if (slot) {
+          slot.textContent = message;
+          slot.hidden = false;
+        }
+        control.setAttribute('aria-invalid', 'true');
+        first ??= control;
+      }
+      first?.focus();
+    };
+
+    // Editing a field the server flagged clears its error right away.
+    form.addEventListener('input', (event) => {
+      const control = event.target;
+      if (!(control instanceof HTMLElement)) return;
+      if (!control.hasAttribute('aria-invalid')) return;
+      control.removeAttribute('aria-invalid');
+      const slot = document.getElementById(`${control.id}-error`);
+      if (slot) {
+        slot.hidden = true;
+        slot.textContent = '';
+      }
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (sending) return;
+      sending = true;
+      // aria-disabled rather than disabled, so focus stays on the button.
+      button.setAttribute('aria-disabled', 'true');
+      button.textContent = 'Sending…';
+      status.textContent = '';
+      clearErrors();
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body: new FormData(form),
+        });
+        const result = (await response.json().catch(() => null)) as {
+          ok?: boolean;
+          message?: string;
+          errors?: Record<string, string>;
+        } | null;
+
+        if (response.ok && result?.ok) {
+          form.reset();
+          setStatus(CONTACT_MESSAGES.success, 'success');
+        } else {
+          setStatus(result?.message ?? CONTACT_MESSAGES.sendFailed, 'error');
+          if (result?.errors) showErrors(result.errors);
+        }
+      } catch {
+        setStatus(CONTACT_MESSAGES.offline, 'error');
+      } finally {
+        sending = false;
+        button.removeAttribute('aria-disabled');
+        button.textContent = idleLabel;
+      }
+    });
+  }
+</script>
