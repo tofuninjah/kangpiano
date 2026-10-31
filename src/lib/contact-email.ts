@@ -3,7 +3,7 @@
 // the visitor's address goes in Reply-To when they gave an email.
 import { Resend } from 'resend';
 import type { ContactRequest } from './contact-schema';
-import { isEmail } from './contact-schema';
+import { isEmail } from './contact';
 import { DEFAULT_LOCALE, type Locale } from './i18n';
 
 export interface OutgoingEmail {

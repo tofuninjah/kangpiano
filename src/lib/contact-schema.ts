@@ -1,11 +1,14 @@
-// Server-side validation for the contact form. Field names and limits come
-// from ./contact so the form markup and this schema can't drift apart.
-// Errors are codes (FieldErrorCode), worded per language in FIELD_ERRORS.
+// Server-side validation for the contact form. Field names, limits, messages
+// and the phone/email checks come from ./contact, so the form markup, the
+// browser script and this schema can't drift apart. Errors are codes
+// (FieldErrorCode), worded per language in FIELD_MESSAGES.
 import { z } from 'zod';
 import {
   CONTACT_LIMITS,
-  FIELD_ERRORS,
+  FIELD_MESSAGES,
   LOCALE_FIELD,
+  isEmail,
+  isPhone,
   townOptions,
   type FieldErrorCode,
 } from './contact';
@@ -42,19 +45,6 @@ const multiLine = (value: string) =>
     .replace(CONTROL_EXCEPT_NEWLINE_TAB, '')
     .trim();
 
-const emailCheck = z.email();
-
-export function isEmail(value: string): boolean {
-  return emailCheck.safeParse(value).success;
-}
-
-/** US or international numbers: digits plus common punctuation, 7–15 digits. */
-export function isPhone(value: string): boolean {
-  if (!/^[0-9+().\-\s]+$/.test(value)) return false;
-  const digits = value.replace(/\D/g, '').length;
-  return digits >= 7 && digits <= 15;
-}
-
 const code = (value: FieldErrorCode) => value;
 
 const text = (max: number, clean: (value: string) => string) =>
@@ -65,18 +55,15 @@ const text = (max: number, clean: (value: string) => string) =>
 
 export const contactSchema = z.object({
   name: text(CONTACT_LIMITS.name, singleLine).pipe(
-    z.string().min(1, code('nameRequired'))
+    z.string().min(1, code('name'))
   ),
   contact: text(CONTACT_LIMITS.contact, singleLine)
-    .pipe(z.string().min(1, code('contactRequired')))
-    .refine(
-      (value) => isEmail(value) || isPhone(value),
-      code('contactInvalid')
-    ),
+    .pipe(z.string().min(1, code('contact')))
+    .refine((value) => isEmail(value) || isPhone(value), code('contactFormat')),
   age: text(CONTACT_LIMITS.age, singleLine),
   town: text(100, singleLine).refine(
     (value) => townOptions().includes(value),
-    code('townInvalid')
+    code('town')
   ),
   message: text(CONTACT_LIMITS.message, multiLine),
 });
@@ -126,7 +113,7 @@ export function parseContact(
     const field = issue.path[0] as ContactField;
     // Every rule above reports one of the codes; the guard keeps a code
     // from ever reaching the visitor if a new rule forgets to.
-    const message = FIELD_ERRORS[locale][issue.message as FieldErrorCode];
+    const message = FIELD_MESSAGES[locale][issue.message as FieldErrorCode];
     if (message) errors[field] ??= message;
   }
   return { ok: false, errors };

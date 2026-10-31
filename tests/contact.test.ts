@@ -57,6 +57,12 @@ describe('contact form', () => {
     expect(form.action).toBe('/api/contact');
   });
 
+  it('leaves the browser’s own checks on for the no-JavaScript post', () => {
+    // The script turns them off at runtime; the markup must not.
+    const form = attrsOf(html.match(/<form\b[^>]*>/)![0]);
+    expect('novalidate' in form).toBe(false);
+  });
+
   it('offers exactly the schedule’s towns plus “Somewhere else”', () => {
     expect(townOptions()).toEqual([...allTowns(), OTHER_TOWN]);
     const select = html.match(/<select\b[\s\S]*?<\/select>/)![0];

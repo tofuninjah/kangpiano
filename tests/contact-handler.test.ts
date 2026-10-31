@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   CONTACT_LIMITS,
   CONTACT_MESSAGES,
-  FIELD_ERRORS,
+  FIELD_MESSAGES,
 } from '../src/lib/contact';
 import {
   EmailNotConfiguredError,
@@ -315,8 +315,8 @@ describe('POST /api/contact from the Korean page', () => {
       ok: false,
       message: CONTACT_MESSAGES.ko.checkFields,
       errors: {
-        contact: FIELD_ERRORS.ko.contactInvalid,
-        town: FIELD_ERRORS.ko.townInvalid,
+        contact: FIELD_MESSAGES.ko.contactFormat,
+        town: FIELD_MESSAGES.ko.town,
       },
     });
   });

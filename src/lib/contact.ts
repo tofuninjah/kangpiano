@@ -2,7 +2,7 @@
 // script and the server. No server-only imports here: the script bundles it,
 // so the messages live here rather than in the larger copy files.
 import { site } from '../data/site';
-import type { Locale } from './i18n';
+import { DEFAULT_LOCALE, type Locale } from './i18n';
 import { allTowns } from './schedule';
 
 /** Every message a visitor can see about their request. */
@@ -46,28 +46,28 @@ export const CONTACT_MESSAGES: Record<Locale, ContactMessages> = {
   },
 };
 
-/** Why a field was rejected; each language words it in FIELD_ERRORS. */
+/**
+ * Why a field was rejected. The schema reports these codes and fieldError
+ * returns their wording; each language words them in FIELD_MESSAGES.
+ */
 export type FieldErrorCode =
-  | 'tooLong'
-  | 'nameRequired'
-  | 'contactRequired'
-  | 'contactInvalid'
-  | 'townInvalid';
+  'name' | 'contact' | 'contactFormat' | 'town' | 'tooLong';
 
-export const FIELD_ERRORS: Record<Locale, Record<FieldErrorCode, string>> = {
+/** What a visitor reads under a field they got wrong, per language. */
+export const FIELD_MESSAGES: Record<Locale, Record<FieldErrorCode, string>> = {
   en: {
+    name: 'Please enter your name.',
+    contact: 'Please enter a phone number or email.',
+    contactFormat: 'Please enter a phone number or an email address.',
+    town: 'Please choose a town.',
     tooLong: 'That’s too long.',
-    nameRequired: 'Please enter your name.',
-    contactRequired: 'Please enter a phone number or email.',
-    contactInvalid: 'Please enter a phone number or an email address.',
-    townInvalid: 'Please choose a town.',
   },
   ko: {
+    name: '이름을 입력해 주세요.',
+    contact: '전화번호나 이메일을 입력해 주세요.',
+    contactFormat: '올바른 전화번호나 이메일 주소를 입력해 주세요.',
+    town: '지역을 선택해 주세요.',
     tooLong: '글자 수가 너무 많습니다. 조금 줄여 주세요.',
-    nameRequired: '이름을 입력해 주세요.',
-    contactRequired: '전화번호나 이메일을 입력해 주세요.',
-    contactInvalid: '올바른 전화번호나 이메일 주소를 입력해 주세요.',
-    townInvalid: '지역을 선택해 주세요.',
   },
 };
 
@@ -98,4 +98,55 @@ export const HONEYPOT_FIELD = 'website';
 
 export function townOptions(): string[] {
   return [...allTowns(), OTHER_TOWN];
+}
+
+// Zod 4's default email pattern (z.regexes.email), so the browser bundle
+// doesn't need Zod; tests/contact-schema.test.ts fails if the two disagree.
+const EMAIL =
+  /^(?:[A-Za-z0-9_'+-]+\.)*[A-Za-z0-9_'+-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9-]*\.)+[A-Za-z]{2,}$/;
+
+export function isEmail(value: string): boolean {
+  return EMAIL.test(value);
+}
+
+/** US or international numbers: digits plus common punctuation, 7–15 digits. */
+export function isPhone(value: string): boolean {
+  if (!/^[0-9+().\s-]+$/.test(value)) return false;
+  const digits = value.replace(/\D/g, '').length;
+  return digits >= 7 && digits <= 15;
+}
+
+/** The code for a check a visitor can fix before sending, if it fails. */
+function fieldErrorCode(
+  field: string,
+  value: string
+): FieldErrorCode | undefined {
+  const trimmed = value.trim();
+  switch (field) {
+    case 'name':
+      return trimmed ? undefined : 'name';
+    case 'contact':
+      if (!trimmed) return 'contact';
+      if (isEmail(trimmed) || isPhone(trimmed)) return undefined;
+      return 'contactFormat';
+    case 'town':
+      return trimmed ? undefined : 'town';
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * The checks a visitor can fix before sending: required fields and the
+ * shape of the contact field, worded in the form's language. The browser
+ * runs them on submit; the server schema runs the same ones (plus lengths
+ * and the town list) on every post.
+ */
+export function fieldError(
+  field: string,
+  value: string,
+  locale: Locale = DEFAULT_LOCALE
+): string | undefined {
+  const code = fieldErrorCode(field, value);
+  return code && FIELD_MESSAGES[locale][code];
 }
