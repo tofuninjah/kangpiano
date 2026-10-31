@@ -1,0 +1,33 @@
+---
+// The home page, shared by / and /ko so both languages keep the same
+// sections in the same order. Each page file passes its locale.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from './Hero.astro';
+import Credentials from './Credentials.astro';
+import Schedule from './Schedule.astro';
+import Lessons from './Lessons.astro';
+import About from './About.astro';
+import Contact from './Contact.astro';
+import type { Locale } from '../lib/i18n';
+import { localBusinessJsonLd } from '../lib/structured-data';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+// The structured data describes the business in English, so it stays on
+// the English page until it has Korean text of its own.
+const structuredData =
+  locale === 'en' ? localBusinessJsonLd(Astro.site?.href) : undefined;
+---
+
+<BaseLayout locale={locale} structuredData={structuredData}>
+  <Hero />
+  <Credentials />
+  <Schedule />
+  <Lessons />
+  <About />
+  <Contact />
+</BaseLayout>

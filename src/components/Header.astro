@@ -1,10 +1,44 @@
 ---
 import { site } from '../data/site';
+import {
+  LOCALES,
+  LOCALE_DETAILS,
+  homeSectionHref,
+  languageLinkPath,
+  localizePath,
+  type Locale,
+} from '../lib/i18n';
+
+interface Props {
+  locale: Locale;
+  /** The page's path without its language prefix. */
+  path: string;
+}
+
+const { locale, path } = Astro.props;
+
+const nav = site.nav.map((item) => ({
+  label: item.label,
+  href: homeSectionHref(item.section, locale),
+}));
+
+// One link per other language, named in that language and marked with its
+// lang so screen readers switch voice for it.
+const languageLinks = LOCALES.filter((other) => other !== locale).map(
+  (other) => ({
+    href: languageLinkPath(path, other),
+    tag: LOCALE_DETAILS[other].tag,
+    name: LOCALE_DETAILS[other].name,
+  })
+);
 ---
 
 <header class="border-b border-staff">
   <div class="mx-auto flex max-w-page items-center justify-between gap-6 px-5 py-4 md:px-12 md:py-6 lg:py-7 xl:px-24">
-    <a href="/" class="flex items-baseline gap-3.5 whitespace-nowrap text-ink">
+    <a
+      href={localizePath('/', locale)}
+      class="flex items-baseline gap-3.5 whitespace-nowrap text-ink"
+    >
       <span class="font-serif text-wordmark-sm lg:text-wordmark">
         {site.name}
       </span>
@@ -16,7 +50,7 @@ import { site } from '../data/site';
     <div class="flex items-center gap-3 lg:gap-6 xl:gap-10">
       <nav aria-label="Main" class="hidden lg:block">
         <ul class="flex items-center gap-6 xl:gap-10">
-          {site.nav.map((item) => (
+          {nav.map((item) => (
             <li>
               <a
                 href={item.href}
@@ -28,6 +62,18 @@ import { site } from '../data/site';
           ))}
         </ul>
       </nav>
+
+      <!-- Shown at every width, so phone visitors find it without the menu. -->
+      {languageLinks.map((link) => (
+        <a
+          href={link.href}
+          lang={link.tag}
+          hreflang={link.tag}
+          class="inline-flex h-11 items-center text-base/5 whitespace-nowrap text-ink underline-offset-4 hover:underline"
+        >
+          {link.name}
+        </a>
+      ))}
 
       <a
         href={site.phone.href}
@@ -96,7 +142,7 @@ import { site } from '../data/site';
 
     <nav aria-label="Main" class="px-5 pt-2 pb-8 md:px-12">
       <ul>
-        {site.nav.map((item) => (
+        {nav.map((item) => (
           <li class="border-b border-staff">
             <a href={item.href} class="block py-4 font-serif text-h3">
               {item.label}

@@ -1,4 +1,5 @@
-// Getting around the page: skip link, phone menu and the phone call bar.
+// Getting around the page: skip link, phone menu, the phone call bar and
+// the link between the English and Korean pages.
 import type { Page } from '@playwright/test';
 import { site } from '../src/data/site';
 import { expect, test } from './test';
@@ -157,5 +158,49 @@ test.describe('from a form result page', () => {
     await expect(
       page.getByRole('heading', { name: /Lessons shaped around/ })
     ).toBeInViewport();
+  });
+});
+
+// Visible at every width, so it runs on both projects.
+test.describe('language link', () => {
+  test('goes from the English page to the Korean page and back', async ({
+    page,
+  }) => {
+    await page.getByRole('link', { name: '한국어', exact: true }).click();
+    await expect(page).toHaveURL('/ko');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ko');
+
+    await page.getByRole('link', { name: 'English', exact: true }).click();
+    await expect(page).toHaveURL('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  });
+
+  test('on the Korean page, the call bar leads to the Korean form', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'The call bar is for phones');
+    await page.goto('/ko');
+    await page
+      .getByRole('link', { name: 'Request a lesson', exact: true })
+      .click();
+
+    await expect(page).toHaveURL('/ko#contact');
+    await expect(page.locator('#contact')).toBeInViewport();
+  });
+
+  test('on the Korean page, the main nav stays on the Korean page', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'Checks the desktop nav');
+    await page.goto('/ko');
+    await page
+      .getByRole('navigation', { name: 'Main' })
+      .getByRole('link', { name: 'Lessons' })
+      .click();
+
+    await expect(page).toHaveURL('/ko#lessons');
+    await expect(page.locator('#lessons')).toBeInViewport();
   });
 });

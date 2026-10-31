@@ -30,6 +30,7 @@ One-page site for Hyejeong Kang's private piano and violin lessons on Oʻahu. Re
 - Where and when she teaches lives only in `src/data/schedule.ts`. The schedule section, hero sentence, meta description and footer render from it, and `tests/schedule.test.ts` fails if any page copy names a town or day the data doesn't have. Change the data, not the copy.
 - No rates on the site until her 2027 prices are set.
 - Hawaiian spelling: ʻokina is U+02BB (Oʻahu, ʻEwa Beach); keep kahakō (Wahiawā).
+- Two languages: English at `/`, Korean under `/ko`, no trailing slash. `src/lib/i18n.ts` holds the locales and URL rules; pages pass `locale` to `BaseLayout` (no Astro i18n routing, so no middleware in front of `/api/contact`) and never redirect by browser language. Only paths in `TRANSLATED_PATHS` get hreflang tags; add a path there when its Korean page exists. Section links go through `homeSectionHref` so they stay on the visitor's language. `tests/locale.test.ts` checks `<html lang>`, hreflang and the language link on every page.
 
 ## Gotchas
 
