@@ -24,10 +24,11 @@ const structuredData =
 ---
 
 <BaseLayout locale={locale} structuredData={structuredData}>
-  <Hero />
-  <Credentials />
-  <Schedule />
-  <Lessons />
-  <About />
+  <Hero locale={locale} />
+  <Credentials locale={locale} />
+  <Schedule locale={locale} />
+  <Lessons locale={locale} />
+  <About locale={locale} />
+  {/* English on both pages until the Korean form copy is in. */}
   <Contact />
 </BaseLayout>

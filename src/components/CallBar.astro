@@ -3,6 +3,7 @@
 // safe area; BaseLayout pads <body> by the same amount so the footer is
 // never covered. Change both together. global.css hides it while a form
 // field has focus, so it can't sit over the field being typed in.
+import { copy } from '../data/copy';
 import { site } from '../data/site';
 import { homeSectionHref, type Locale } from '../lib/i18n';
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const { locale } = Astro.props;
+const text = copy[locale].callBar;
 ---
 
 <div
@@ -19,7 +21,7 @@ const { locale } = Astro.props;
 >
   <a
     href={site.phone.href}
-    aria-label={`Call now, ${site.phone.display}`}
+    aria-label={text.callNowLabel(site.phone.display)}
     class="flex h-13 flex-1 items-center justify-center gap-2 rounded-full bg-quink text-base/5 font-semibold text-paper"
   >
     <svg
@@ -36,12 +38,12 @@ const { locale } = Astro.props;
         stroke-linejoin="round"
       ></path>
     </svg>
-    Call now
+    {text.callNow}
   </a>
   <a
     href={homeSectionHref('contact', locale)}
     class="flex h-13 flex-1 items-center justify-center rounded-full border-[1.5px] border-quink text-base/5 font-semibold text-quink"
   >
-    Request a lesson
+    {text.request}
   </a>
 </div>

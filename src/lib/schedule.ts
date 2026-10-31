@@ -1,17 +1,22 @@
-import { locations, type Location } from '../data/schedule';
+// Facts read from the schedule, plus the English sentences built from it.
+// The Korean sentences live in src/data/copy/ko.ts, since Korean word order
+// and particles need their own builders.
+import { locations } from '../data/schedule';
 import { formatList, joinClauses } from './format';
-
-/** Section heading for a location: "At your home" / "At my home". */
-export function locationTitle(location: Location): string {
-  return location.host === 'student' ? 'At your home' : 'At my home';
-}
 
 /** Every town taught in, in schedule order, without repeats. */
 export function allTowns(): string[] {
   return [...new Set(locations.flatMap((location) => location.towns))];
 }
 
-/** Hero copy, in Hyejeong's voice. */
+/** Towns where she teaches in the student's home. */
+export function inHomeTowns(): string[] {
+  return locations
+    .filter((location) => location.host === 'student')
+    .flatMap((location) => location.towns);
+}
+
+/** English hero copy, in Hyejeong's voice. */
 export function teachingSentence(): string {
   const clauses = locations.map((location) => {
     const place = location.host === 'student' ? 'your home' : 'my home';

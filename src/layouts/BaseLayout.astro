@@ -11,7 +11,7 @@ import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import CallBar from '../components/CallBar.astro';
-import { site } from '../data/site';
+import { copy } from '../data/copy';
 import {
   DEFAULT_LOCALE,
   LOCALE_DETAILS,
@@ -32,12 +32,13 @@ interface Props {
   locale?: Locale;
 }
 
+const { locale = DEFAULT_LOCALE } = Astro.props;
+const text = copy[locale];
 const {
-  title = site.title,
-  description = site.description,
+  title = text.meta.title,
+  description = text.meta.description,
   noindex = false,
   structuredData,
-  locale = DEFAULT_LOCALE,
 } = Astro.props;
 
 const { tag, og } = LOCALE_DETAILS[locale];
@@ -88,7 +89,7 @@ const ogAlternates = alternates
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content={site.title} />
+    <meta property="og:site_name" content={text.meta.siteName} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:locale" content={og} />
@@ -119,13 +120,13 @@ const ogAlternates = alternates
       href="#main"
       class="sr-only rounded-full bg-quink text-ui font-semibold text-paper focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-5 focus:py-3"
     >
-      Skip to content
+      {text.skipLink}
     </a>
     <Header locale={locale} path={path} />
     <main id="main" tabindex="-1" class="flex-1 focus:outline-none">
       <slot />
     </main>
-    <Footer />
+    <Footer locale={locale} />
     <CallBar locale={locale} />
   </body>
 </html>

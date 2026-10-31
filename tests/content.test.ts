@@ -1,12 +1,13 @@
-// Enforces src/data/lessons.ts and src/data/about.ts as the source of the
-// Lessons and About copy: the page shows exactly what the data holds, in
-// order, nothing missing and nothing extra.
+// Enforces each language's copy file (src/data/copy) as the source of the
+// Credentials, Lessons and About text: each page shows exactly what its copy
+// holds, in order, nothing missing and nothing extra.
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 import About from '../src/components/About.astro';
+import Credentials from '../src/components/Credentials.astro';
 import Lessons from '../src/components/Lessons.astro';
-import { about } from '../src/data/about';
-import { lessons } from '../src/data/lessons';
+import { copy } from '../src/data/copy';
+import { LOCALES } from '../src/lib/i18n';
 
 function textOf(html: string): string {
   return html
@@ -27,39 +28,59 @@ beforeAll(async () => {
   container = await AstroContainer.create();
 });
 
-describe('lessons section', () => {
-  it('lists exactly the data’s lessons, in order', async () => {
-    const html = await container.renderToString(Lessons);
-    expect(all(html, /<h3[^>]*>([\s\S]*?)<\/h3>/g)).toEqual(
-      lessons.map((lesson) => lesson.title)
-    );
-    expect(
-      all(html, /<h3[^>]*>[\s\S]*?<\/h3>\s*<p[^>]*>([\s\S]*?)<\/p>/g)
-    ).toEqual(lessons.map((lesson) => lesson.detail));
+for (const locale of LOCALES) {
+  const text = copy[locale];
+  const props = { props: { locale } };
+
+  describe(`credentials (${locale})`, () => {
+    it('lists exactly the copy’s credentials, in order', async () => {
+      const html = await container.renderToString(Credentials, props);
+      expect(all(html, /<li[^>]*>([\s\S]*?)<\/li>/g)).toEqual(
+        text.credentials.map((item) => `${item.title} ${item.detail}`)
+      );
+    });
   });
 
-  it('numbers the lessons 01, 02, … to match', async () => {
-    const html = await container.renderToString(Lessons);
-    const numbers = all(
-      html,
-      /<span aria-hidden="true"[^>]*>([\s\S]*?)<\/span>/g
-    );
-    expect(numbers).toEqual(
-      lessons.map((_, index) => String(index + 1).padStart(2, '0'))
-    );
-  });
-});
+  describe(`lessons section (${locale})`, () => {
+    it('lists exactly the copy’s lessons, in order', async () => {
+      const html = await container.renderToString(Lessons, props);
+      expect(all(html, /<h3[^>]*>([\s\S]*?)<\/h3>/g)).toEqual(
+        text.lessons.items.map((lesson) => lesson.title)
+      );
+      expect(
+        all(html, /<h3[^>]*>[\s\S]*?<\/h3>\s*<p[^>]*>([\s\S]*?)<\/p>/g)
+      ).toEqual(text.lessons.items.map((lesson) => lesson.detail));
+    });
 
-describe('about section', () => {
-  it('shows the quote and bio from the data', async () => {
-    const text = textOf(await container.renderToString(About));
-    expect(text).toContain(`“${about.quote.lead} ${about.quote.emphasis}”`);
-    expect(text).toContain(about.bio);
+    it('numbers the lessons 01, 02, … to match', async () => {
+      const html = await container.renderToString(Lessons, props);
+      const numbers = all(
+        html,
+        /<span aria-hidden="true"[^>]*>([\s\S]*?)<\/span>/g
+      );
+      expect(numbers).toEqual(
+        text.lessons.items.map((_, index) => String(index + 1).padStart(2, '0'))
+      );
+    });
   });
 
-  it('puts exactly the data’s paragraphs behind "Why learn piano?"', async () => {
-    const html = await container.renderToString(About);
-    const block = html.match(/data-why-piano[^>]*>([\s\S]*?)<\/div>/)![1]!;
-    expect(all(block, /<p>([\s\S]*?)<\/p>/g)).toEqual([...about.whyPiano]);
+  describe(`about section (${locale})`, () => {
+    it('shows the quote and bio from the copy', async () => {
+      const page = textOf(await container.renderToString(About, props));
+      const { quote, bio } = text.about;
+      expect(page).toContain(`“${quote.lead} ${quote.emphasis}”`);
+      expect(page).toContain(bio);
+    });
+
+    it('puts exactly the copy’s paragraphs behind its "Why learn piano?"', async () => {
+      const html = await container.renderToString(About, props);
+      expect(textOf(html)).toContain(text.about.whyTitle);
+      const block = html.match(/data-why-piano[^>]*>([\s\S]*?)<\/div>/)![1]!;
+      expect(all(block, /<p>([\s\S]*?)<\/p>/g)).toEqual(
+        text.about.why.map((point) =>
+          point.lead ? `${point.lead} ${point.text}` : point.text
+        )
+      );
+    });
   });
-});
+}

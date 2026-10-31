@@ -3,6 +3,7 @@
 // screen-reader checks in the other specs and manual review cover the rest.
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
+import { copy } from '../src/data/copy';
 import { contactForm, fillRequest, serveContact } from './contact-form';
 import { BUILT_PAGES, expect, test } from './test';
 
@@ -46,6 +47,21 @@ test('the open phone menu has no axe violations', async ({
   await page.goto('/');
   await page.getByRole('button', { name: 'Menu', exact: true }).click();
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible();
+
+  expect(await violations(page)).toEqual([]);
+});
+
+test('the open Korean phone menu has no axe violations', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, 'The menu button shows below 1024px');
+  const { header } = copy.ko;
+  await page.goto('/ko');
+  await page.getByRole('button', { name: header.menu, exact: true }).click();
+  await expect(
+    page.getByRole('navigation', { name: header.navLabel })
+  ).toBeVisible();
 
   expect(await violations(page)).toEqual([]);
 });

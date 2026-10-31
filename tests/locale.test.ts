@@ -1,9 +1,11 @@
 // What each page tells browsers and search engines about its language:
 // <html lang> matches the URL, translated pages point at each other with
-// hreflang, and the header links to the other language.
+// hreflang, the header links to the other language, and the Korean page
+// carries no leftover English.
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 import config from '../astro.config.mjs';
+import { copy } from '../src/data/copy';
 import {
   LOCALES,
   LOCALE_DETAILS,
@@ -11,6 +13,7 @@ import {
   localeOf,
   localizePath,
 } from '../src/lib/i18n';
+import { allTowns } from '../src/lib/schedule';
 
 const siteUrl = config.site!;
 
@@ -153,5 +156,56 @@ describe('language link', () => {
     expect(languageLinks(html['/request-sent']!)).toEqual([
       { href: '/ko', lang: 'ko', hreflang: 'ko', text: '한국어' },
     ]);
+  });
+});
+
+describe('Korean home page', () => {
+  // Latin text the Korean page is allowed to show: the English town names
+  // beside the Hangul in the schedule, and the link to the English page.
+  const ALLOWED = [...allTowns(), LOCALE_DETAILS.en.name];
+
+  /** Visible text, alt text and aria-labels, outside the contact form. */
+  function readable(page: string): string[] {
+    const body = page
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<head>[\s\S]*?<\/head>/, '')
+      .replace(/<script[\s\S]*?<\/script>/g, '')
+      .replace(/<style[\s\S]*?<\/style>/g, '')
+      // English on both pages until the Korean form copy is in.
+      .replace(/<section\s[^>]*id="contact"[\s\S]*?<\/section>/, '');
+    const attributes = [
+      ...body.matchAll(/\b(?:alt|aria-label)="([^"]*)"/g),
+    ].map((m) => m[1]!);
+    // Tags end at the first > outside quotes; class values such as
+    // [&>p]:mb-5 contain one.
+    const tag = /<(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+    // Decorative numerals in the schedule (I., II.) are aria-hidden.
+    const text = body
+      .replace(/<span aria-hidden="true"[^>]*>\s*[IVX]+\.\s*<\/span>/g, '')
+      .replace(tag, ' ');
+    return [text, ...attributes];
+  }
+
+  it('has a contact form to leave out', () => {
+    expect(html['/ko']).toMatch(/<section\s[^>]*id="contact"/);
+  });
+
+  it('shows no English outside the contact form, apart from names', () => {
+    const english = readable(html['/ko']!).flatMap((chunk) => {
+      let rest = chunk;
+      for (const word of ALLOWED) rest = rest.replaceAll(word, '');
+      return rest.match(/[A-Za-z]{2,}/g) ?? [];
+    });
+    expect(english).toEqual([]);
+  });
+
+  it('uses the Korean title and description', () => {
+    expect(html['/ko']).toContain(`<title>${copy.ko.meta.title}</title>`);
+    expect(html['/ko']).toContain(
+      `<meta name="description" content="${copy.ko.meta.description}">`
+    );
+    expect(html['/ko']).toContain(
+      `<meta property="og:site_name" content="${copy.ko.meta.siteName}">`
+    );
   });
 });
