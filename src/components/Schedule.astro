@@ -1,7 +1,15 @@
 ---
-import { locations, scheduleNote } from '../data/schedule';
-import { locationTitle } from '../lib/schedule';
+import { copy } from '../data/copy';
+import { locations } from '../data/schedule';
+import type { Locale } from '../lib/i18n';
 import TownList from './TownList.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const text = copy[locale];
 
 const numerals = ['I.', 'II.', 'III.', 'IV.'];
 ---
@@ -14,16 +22,19 @@ const numerals = ['I.', 'II.', 'III.', 'IV.'];
   <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
     <div class="flex flex-col gap-4">
       <p class="text-label font-semibold text-pencil uppercase">
-        The weekly program
+        {text.schedule.eyebrow}
       </p>
       <h2
         id="schedule-heading"
         class="font-serif text-h2-sm font-light lg:text-h2"
       >
-        Where I teach, <em class="whitespace-nowrap">and when.</em>
+        {text.schedule.heading.lead}{' '}
+        <em class="whitespace-nowrap">{text.schedule.heading.emphasis}</em>
       </h2>
     </div>
-    <p class="text-lead-sm text-pencil lg:max-w-[23.75rem]">{scheduleNote}</p>
+    <p class="text-lead-sm text-pencil lg:max-w-[23.75rem]">
+      {text.schedule.note}
+    </p>
   </div>
 
   <div class="mt-10 grid gap-12 md:mt-14 lg:grid-cols-2 lg:gap-16 xl:gap-24">
@@ -42,15 +53,21 @@ const numerals = ['I.', 'II.', 'III.', 'IV.'];
           </span>
           <div class="flex flex-col gap-1.5">
             <h3 id={`location-${location.host}`} class="font-serif text-h3">
-              {locationTitle(location)}
+              {text.schedule.locationTitle(location.host)}
             </h3>
-            <TownList towns={location.towns} class="text-base/5 text-pencil" />
+            <TownList
+              towns={location.towns.map(text.schedule.townLabel)}
+              class="text-base/5 text-pencil [&:lang(ko)]:leading-6"
+            />
           </div>
         </div>
-        <ul class="flex flex-col pt-3 pl-[4.25rem]" aria-label="Lesson days">
+        <ul
+          class="flex flex-col pt-3 pl-[4.25rem]"
+          aria-label={text.schedule.daysLabel}
+        >
           {location.days.map((day) => (
             <li class="border-b border-dotted border-pencil py-4 font-serif text-day">
-              {day}
+              {text.dayName(day)}
             </li>
           ))}
         </ul>

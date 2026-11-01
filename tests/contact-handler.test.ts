@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CONTACT_LIMITS, CONTACT_MESSAGES } from '../src/lib/contact';
+import {
+  CONTACT_LIMITS,
+  CONTACT_MESSAGES,
+  FIELD_MESSAGES,
+} from '../src/lib/contact';
 import {
   EmailNotConfiguredError,
   type OutgoingEmail,
@@ -88,13 +92,13 @@ describe('POST /api/contact', () => {
     const { run } = setup();
     const sent = await run(post(valid, { accept: 'text/html' }));
     expect(sent.status).toBe(303);
-    expect(sent.headers.get('location')).toBe(RESULT_PAGES.sent);
+    expect(sent.headers.get('location')).toBe(RESULT_PAGES.en.sent);
 
     const notSent = await run(
       post({ ...valid, contact: 'nope' }, { accept: 'text/html' })
     );
     expect(notSent.status).toBe(303);
-    expect(notSent.headers.get('location')).toBe(RESULT_PAGES.notSent);
+    expect(notSent.headers.get('location')).toBe(RESULT_PAGES.en.notSent);
   });
 
   it('rejects other origins and requests without one', async () => {
@@ -133,7 +137,7 @@ describe('POST /api/contact', () => {
     const declaredResponse = await run(withLength);
     expect(declaredResponse.status).toBe(413);
     expect((await declaredResponse.json()).message).toBe(
-      CONTACT_MESSAGES.tooLarge
+      CONTACT_MESSAGES.en.tooLarge
     );
 
     const stream = new ReadableStream({
@@ -155,7 +159,7 @@ describe('POST /api/contact', () => {
       )
     );
     expect(response.status).toBe(303);
-    expect(response.headers.get('location')).toBe(RESULT_PAGES.notSent);
+    expect(response.headers.get('location')).toBe(RESULT_PAGES.en.notSent);
   });
 
   it('fits every field at its maxlength in Hangul under the cap', async () => {
@@ -167,6 +171,7 @@ describe('POST /api/contact', () => {
         age: '가'.repeat(CONTACT_LIMITS.age),
         town: 'Mililani',
         message: '가'.repeat(CONTACT_LIMITS.message),
+        locale: 'ko',
       })
     );
     expect(response.status).toBe(200);
@@ -182,7 +187,7 @@ describe('POST /api/contact', () => {
     const page = await run(
       post({ ...valid, website: 'x' }, { accept: 'text/html' })
     );
-    expect(page.headers.get('location')).toBe(RESULT_PAGES.sent);
+    expect(page.headers.get('location')).toBe(RESULT_PAGES.en.sent);
     expect(send).not.toHaveBeenCalled();
   });
 
@@ -193,7 +198,7 @@ describe('POST /api/contact', () => {
     );
     expect(response.status).toBe(400);
     const body = await response.json();
-    expect(body.message).toBe(CONTACT_MESSAGES.checkFields);
+    expect(body.message).toBe(CONTACT_MESSAGES.en.checkFields);
     expect(Object.keys(body.errors).sort()).toEqual(['contact', 'town']);
     expect(send).not.toHaveBeenCalled();
   });
@@ -215,7 +220,7 @@ describe('POST /api/contact', () => {
     const blocked = await run(post(valid));
     expect(blocked.status).toBe(429);
     expect(Number(blocked.headers.get('retry-after'))).toBeGreaterThan(0);
-    expect((await blocked.json()).message).toBe(CONTACT_MESSAGES.tooMany);
+    expect((await blocked.json()).message).toBe(CONTACT_MESSAGES.en.tooMany);
 
     expect((await run(post(valid), '198.51.100.9')).status).toBe(200);
   });
@@ -259,7 +264,7 @@ describe('POST /api/contact', () => {
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({
       ok: false,
-      message: CONTACT_MESSAGES.sendFailed,
+      message: CONTACT_MESSAGES.en.sendFailed,
     });
     expect(log).toHaveBeenCalledTimes(1);
     const line = log.mock.calls[0]![0] as string;
@@ -277,5 +282,83 @@ describe('POST /api/contact', () => {
     expect(response.status).toBe(500);
     expect(JSON.stringify(await response.json())).not.toContain('configured');
     expect(log.mock.calls[0]![0]).toContain('not configured');
+  });
+});
+
+describe('POST /api/contact from the Korean page', () => {
+  const korean = { ...valid, locale: 'ko' };
+
+  it('tags the email so Hyejeong replies in Korean', async () => {
+    const { send, run } = setup();
+    expect((await run(post(korean))).status).toBe(200);
+    const email = send.mock.calls[0]![0];
+    expect(email.subject).toBe('[한국어] Lesson request from Test Parent');
+    expect(email.text).toContain('Reply in Korean.');
+  });
+
+  it('lands no-JS posts on the Korean result pages', async () => {
+    const { run } = setup();
+    const sent = await run(post(korean, { accept: 'text/html' }));
+    expect(sent.headers.get('location')).toBe(RESULT_PAGES.ko.sent);
+    const notSent = await run(
+      post({ ...korean, contact: 'nope' }, { accept: 'text/html' })
+    );
+    expect(notSent.headers.get('location')).toBe(RESULT_PAGES.ko.notSent);
+  });
+
+  it('words the message and field errors in Korean', async () => {
+    const { run } = setup();
+    const response = await run(
+      post({ ...korean, contact: 'hello', town: 'Honolulu' })
+    );
+    expect(await response.json()).toEqual({
+      ok: false,
+      message: CONTACT_MESSAGES.ko.checkFields,
+      errors: {
+        contact: FIELD_MESSAGES.ko.contactFormat,
+        town: FIELD_MESSAGES.ko.town,
+      },
+    });
+  });
+
+  it('words rate-limit and send failures in Korean', async () => {
+    const { run } = setup(
+      vi.fn(async () => {
+        throw new Error('Resend rejected the email: x');
+      })
+    );
+    expect((await (await run(post(korean))).json()).message).toBe(
+      CONTACT_MESSAGES.ko.sendFailed
+    );
+    for (let i = 0; i < 4; i += 1) await run(post(korean));
+    expect((await (await run(post(korean))).json()).message).toBe(
+      CONTACT_MESSAGES.ko.tooMany
+    );
+  });
+
+  it('treats any other locale value as English and never echoes it', async () => {
+    const repeated = new URLSearchParams(valid);
+    repeated.append('locale', 'ko');
+    repeated.append('locale', 'ko');
+    const bodies = [
+      ...[
+        'https://evil.test/',
+        '//evil.test',
+        'KO',
+        ' ko',
+        'ko\r\nX: y',
+        'fr',
+        '',
+      ].map((locale) => new URLSearchParams({ ...valid, locale }).toString()),
+      repeated.toString(),
+    ];
+    for (const body of bodies) {
+      const { send, run } = setup();
+      const response = await run(post({}, { accept: 'text/html', body }));
+      expect(response.headers.get('location'), body).toBe(RESULT_PAGES.en.sent);
+      const email = send.mock.calls[0]![0];
+      expect(email.subject, body).toBe('Lesson request from Test Parent');
+      expect(JSON.stringify(email), body).not.toMatch(/evil|X: y/);
+    }
   });
 });

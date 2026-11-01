@@ -1,5 +1,6 @@
 // The lesson request form with JavaScript off (the no-js-chromium project):
 // a normal form post that lands on a fixed result page.
+import { copy } from '../src/data/copy';
 import { contactForm, fillRequest, serveContact } from './contact-form';
 import { expect, test } from './test';
 
@@ -52,4 +53,50 @@ test('the browser blocks an empty request before it is sent', async ({
   await expect(contactForm(page).getByLabel('Your name')).toBeFocused();
   await expect(page).toHaveURL('/#contact');
   expect(endpoint.requests).toBe(0);
+});
+
+test.describe('on the Korean page', () => {
+  const ko = copy.ko;
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/ko#contact');
+  });
+
+  test('posts the form and lands on the Korean sent page', async ({ page }) => {
+    const endpoint = await serveContact(page);
+    await fillRequest(page, {}, 'ko');
+    await contactForm(page, 'ko')
+      .getByRole('button', { name: ko.contact.submit })
+      .click();
+
+    await expect(page).toHaveURL('/ko/request-sent');
+    await expect(
+      page.getByRole('heading', {
+        level: 1,
+        name: ko.formResult.sent.heading,
+      })
+    ).toBeVisible();
+    expect(endpoint.sent[0]!.subject).toMatch(/^\[한국어\] /);
+  });
+
+  test('lands on the Korean not-sent page, which leads back to the Korean form', async ({
+    page,
+  }) => {
+    await serveContact(page);
+    await fillRequest(page, { contact: 'not sure' }, 'ko');
+    await contactForm(page, 'ko')
+      .getByRole('button', { name: ko.contact.submit })
+      .click();
+
+    await expect(page).toHaveURL('/ko/request-not-sent');
+    await expect(
+      page.getByRole('heading', {
+        level: 1,
+        name: ko.formResult.notSent.heading,
+      })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: ko.formResult.back })
+    ).toHaveAttribute('href', '/ko#contact');
+  });
 });

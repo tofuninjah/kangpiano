@@ -2,24 +2,32 @@
 // fake sender and limiter. Order matters: cheap rejections (origin, type,
 // size) happen before the body is parsed, and the rate limit sits right
 // before the send, so typo retries don't lock a visitor out.
-import { CONTACT_MESSAGES as MESSAGES, HONEYPOT_FIELD } from './contact';
+import { CONTACT_MESSAGES, HONEYPOT_FIELD } from './contact';
 import {
   buildEmail,
   EmailNotConfiguredError,
   type SendEmail,
 } from './contact-email';
-import { parseContact, type ContactErrors } from './contact-schema';
+import {
+  parseContact,
+  parseLocale,
+  type ContactErrors,
+} from './contact-schema';
+import { DEFAULT_LOCALE, type Locale } from './i18n';
 import type { RateLimiter } from './rate-limit';
 
 // Every field at its maxlength, urlencoded in a non-Latin script (Hangul is
 // 9 bytes per character), comes to about 21 KB; this leaves headroom.
 export const MAX_BODY_BYTES = 32 * 1024;
 
-/** No-JS posts land on one of these fixed pages; nothing in the request picks them. */
+/**
+ * No-JS posts land on one of these fixed pages. The request's locale picks
+ * the row; nothing in the request becomes part of the path.
+ */
 export const RESULT_PAGES = {
-  sent: '/request-sent',
-  notSent: '/request-not-sent',
-} as const;
+  en: { sent: '/request-sent', notSent: '/request-not-sent' },
+  ko: { sent: '/ko/request-sent', notSent: '/ko/request-not-sent' },
+} as const satisfies Record<Locale, { sent: string; notSent: string }>;
 
 const FORM_TYPES = ['application/x-www-form-urlencoded', 'multipart/form-data'];
 
@@ -49,9 +57,15 @@ export async function handleContact(
     return plain(415, 'Unsupported Media Type');
   }
 
+  // Until the body is read the page's language is unknown, so these early
+  // answers are English. A real form can't trigger them: the browser caps
+  // every field, and it always sends a readable body.
+  const early = DEFAULT_LOCALE;
   const body = await readLimited(request, MAX_BODY_BYTES);
   if (body === null) {
-    return failure(wantsJson, 413, { message: MESSAGES.tooLarge });
+    return failure(wantsJson, early, 413, {
+      message: CONTACT_MESSAGES[early].tooLarge,
+    });
   }
 
   let form: FormData;
@@ -60,20 +74,25 @@ export async function handleContact(
       headers: { 'content-type': contentType },
     }).formData();
   } catch {
-    return failure(wantsJson, 400, { message: MESSAGES.unreadable });
+    return failure(wantsJson, early, 400, {
+      message: CONTACT_MESSAGES[early].unreadable,
+    });
   }
+
+  const locale = parseLocale(form);
+  const messages = CONTACT_MESSAGES[locale];
 
   // Bots that fill the hidden field get the same answer as people, so the
   // honeypot isn't revealed, but nothing is sent.
   const honeypot = form.get(HONEYPOT_FIELD);
   if (typeof honeypot === 'string' && honeypot.trim() !== '') {
-    return success(wantsJson);
+    return success(wantsJson, locale);
   }
 
-  const parsed = parseContact(form);
+  const parsed = parseContact(form, locale);
   if (!parsed.ok) {
-    return failure(wantsJson, 400, {
-      message: MESSAGES.checkFields,
+    return failure(wantsJson, locale, 400, {
+      message: messages.checkFields,
       errors: parsed.errors,
     });
   }
@@ -84,14 +103,15 @@ export async function handleContact(
   if (!limit.allowed) {
     return failure(
       wantsJson,
+      locale,
       429,
-      { message: MESSAGES.tooMany },
+      { message: messages.tooMany },
       { 'retry-after': String(limit.retryAfterSeconds) }
     );
   }
 
   try {
-    await deps.send(buildEmail(parsed.data));
+    await deps.send(buildEmail(parsed.data, locale));
   } catch (error) {
     const reason =
       error instanceof EmailNotConfiguredError
@@ -100,10 +120,10 @@ export async function handleContact(
           ? error.message
           : 'unknown error';
     deps.log?.(`contact: email not sent (${reason})`);
-    return failure(wantsJson, 500, { message: MESSAGES.sendFailed });
+    return failure(wantsJson, locale, 500, { message: messages.sendFailed });
   }
 
-  return success(wantsJson);
+  return success(wantsJson, locale);
 }
 
 // Same approach as Astro's checkOrigin: browsers send Sec-Fetch-Site, which
@@ -178,17 +198,20 @@ function redirect(path: string): Response {
   });
 }
 
-function success(wantsJson: boolean): Response {
-  return wantsJson ? json(200, { ok: true }) : redirect(RESULT_PAGES.sent);
+function success(wantsJson: boolean, locale: Locale): Response {
+  return wantsJson
+    ? json(200, { ok: true })
+    : redirect(RESULT_PAGES[locale].sent);
 }
 
 function failure(
   wantsJson: boolean,
+  locale: Locale,
   status: number,
   body: { message: string; errors?: ContactErrors },
   headers: Record<string, string> = {}
 ): Response {
   return wantsJson
     ? json(status, { ok: false, ...body }, headers)
-    : redirect(RESULT_PAGES.notSent);
+    : redirect(RESULT_PAGES[locale].notSent);
 }

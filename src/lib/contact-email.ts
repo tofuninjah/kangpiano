@@ -4,6 +4,7 @@
 import { Resend } from 'resend';
 import type { ContactRequest } from './contact-schema';
 import { isEmail } from './contact';
+import { DEFAULT_LOCALE, type Locale } from './i18n';
 
 export interface OutgoingEmail {
   subject: string;
@@ -19,7 +20,16 @@ export class EmailNotConfiguredError extends Error {
   }
 }
 
-export function buildEmail(request: ContactRequest): OutgoingEmail {
+/**
+ * The email stays in English for Hyejeong either way; requests from the
+ * Korean page are tagged so she knows to reply in Korean. `locale` comes
+ * from parseLocale, so only these fixed strings can appear.
+ */
+export function buildEmail(
+  request: ContactRequest,
+  locale: Locale = DEFAULT_LOCALE
+): OutgoingEmail {
+  const korean = locale === 'ko';
   const lines = [
     `Name: ${request.name}`,
     `Phone or email: ${request.contact}`,
@@ -30,11 +40,13 @@ export function buildEmail(request: ContactRequest): OutgoingEmail {
     request.message || '(none)',
     '',
     '—',
-    'Sent from the lesson request form on the website.',
+    korean
+      ? 'Sent from the lesson request form on the Korean page. Reply in Korean.'
+      : 'Sent from the lesson request form on the website.',
   ];
   return {
     // The schema already removed CR/LF from name; the subject stays one line.
-    subject: `Lesson request from ${request.name}`,
+    subject: `${korean ? '[한국어] ' : ''}Lesson request from ${request.name}`,
     text: lines.join('\n'),
     replyTo: isEmail(request.contact) ? request.contact : undefined,
   };

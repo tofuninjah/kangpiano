@@ -3,7 +3,7 @@
 // tests/seo.test.ts fails if this list and the pages' noindex tags disagree.
 import type { APIRoute } from 'astro';
 
-export const INDEXED_PATHS = ['/'];
+export const INDEXED_PATHS = ['/', '/ko'];
 
 export const GET: APIRoute = ({ site }) => {
   if (!site) throw new Error('Set `site` in astro.config.mjs for the sitemap.');

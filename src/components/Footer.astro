@@ -1,19 +1,42 @@
 ---
+import { copy } from '../data/copy';
 import { site } from '../data/site';
+import type { Locale } from '../lib/i18n';
+import LanguageLink from './LanguageLink.astro';
 import TownList from './TownList.astro';
+
+interface Props {
+  locale: Locale;
+  /** The page's path without its language prefix. */
+  path: string;
+}
+
+const { locale, path } = Astro.props;
+const text = copy[locale];
 ---
 
 <footer class="bg-ink">
   <div class="mx-auto flex max-w-page flex-col gap-4 px-5 py-8 md:flex-row md:items-center md:justify-between md:px-12 lg:py-9 xl:px-24">
     <p class="font-serif text-wordmark-sm text-plaster">
-      {site.name} <span class="text-stone italic">{site.instruments}</span>
+      {text.name} <span class="text-stone italic">{text.instruments}</span>
     </p>
-    <TownList towns={site.towns} class="text-small text-stone" />
-    <a
-      href={site.phone.href}
-      class="text-small text-plaster underline-offset-4 hover:underline focus-visible:outline-plaster"
-    >
-      {site.phone.display}
-    </a>
+    <TownList
+      towns={site.towns.map((town) => ({ name: text.townName(town) }))}
+      class="text-small text-stone"
+    />
+    {/* Phones: both links are 44px tall, the project's mobile target size. */}
+    <div class="flex items-center gap-6">
+      <a
+        href={site.phone.href}
+        class="inline-flex items-center text-small text-plaster underline-offset-4 hover:underline focus-visible:outline-plaster max-md:min-h-11"
+      >
+        {site.phone.display}
+      </a>
+      <LanguageLink
+        locale={locale}
+        path={path}
+        class="inline-flex items-center text-small text-plaster underline-offset-4 hover:underline focus-visible:outline-plaster max-md:min-h-11"
+      />
+    </div>
   </div>
 </footer>

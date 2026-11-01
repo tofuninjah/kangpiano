@@ -1,22 +1,42 @@
 ---
+import { copy } from '../data/copy';
 import { site } from '../data/site';
+import { homeSectionHref, localizePath, type Locale } from '../lib/i18n';
+import LanguageLink from './LanguageLink.astro';
+
+interface Props {
+  locale: Locale;
+  /** The page's path without its language prefix. */
+  path: string;
+}
+
+const { locale, path } = Astro.props;
+const text = copy[locale];
+
+const nav = site.navSections.map((section) => ({
+  label: text.header.nav[section],
+  href: homeSectionHref(section, locale),
+}));
 ---
 
 <header class="border-b border-staff">
   <div class="mx-auto flex max-w-page items-center justify-between gap-6 px-5 py-4 md:px-12 md:py-6 lg:py-7 xl:px-24">
-    <a href="/" class="flex items-baseline gap-3.5 whitespace-nowrap text-ink">
+    <a
+      href={localizePath('/', locale)}
+      class="flex items-baseline gap-3.5 whitespace-nowrap text-ink"
+    >
       <span class="font-serif text-wordmark-sm lg:text-wordmark">
-        {site.name}
+        {text.name}
       </span>
       <span class="hidden text-label font-semibold text-pencil uppercase sm:inline">
-        {site.instruments}
+        {text.instruments}
       </span>
     </a>
 
     <div class="flex items-center gap-3 lg:gap-6 xl:gap-10">
-      <nav aria-label="Main" class="hidden lg:block">
+      <nav aria-label={text.header.navLabel} class="hidden lg:block">
         <ul class="flex items-center gap-6 xl:gap-10">
-          {site.nav.map((item) => (
+          {nav.map((item) => (
             <li>
               <a
                 href={item.href}
@@ -28,6 +48,18 @@ import { site } from '../data/site';
           ))}
         </ul>
       </nav>
+
+      {/*
+        Shown at every width, so phone visitors find it without the menu.
+        Beside the section links on desktop, a rule and the softer grey mark
+        it as a switch of page, not a fifth section.
+      */}
+      <span aria-hidden="true" class="hidden h-5 w-px bg-staff lg:block"></span>
+      <LanguageLink
+        locale={locale}
+        path={path}
+        class="inline-flex h-11 items-center text-base/5 whitespace-nowrap text-ink underline-offset-4 hover:underline lg:text-pencil lg:hover:text-ink"
+      />
 
       <a
         href={site.phone.href}
@@ -54,7 +86,7 @@ import { site } from '../data/site';
             stroke-width="1.5"
           ></path>
         </svg>
-        <span class="sr-only">Menu</span>
+        <span class="sr-only">{text.header.menu}</span>
       </button>
     </div>
   </div>
@@ -70,7 +102,7 @@ import { site } from '../data/site';
     class="inset-x-0 top-0 bottom-auto m-0 max-h-dvh w-full max-w-none overflow-y-auto border-0 bg-plaster p-0 text-ink backdrop:bg-ink/40"
   >
     <div class="flex items-center justify-between border-b border-staff px-5 py-4 md:px-12 md:py-6">
-      <span class="font-serif text-wordmark-sm">{site.name}</span>
+      <span class="font-serif text-wordmark-sm">{text.name}</span>
       <button
         type="button"
         popovertarget="site-menu"
@@ -90,13 +122,13 @@ import { site } from '../data/site';
             stroke-width="1.5"
           ></path>
         </svg>
-        <span class="sr-only">Close menu</span>
+        <span class="sr-only">{text.header.closeMenu}</span>
       </button>
     </div>
 
-    <nav aria-label="Main" class="px-5 pt-2 pb-8 md:px-12">
+    <nav aria-label={text.header.navLabel} class="px-5 pt-2 pb-8 md:px-12">
       <ul>
-        {site.nav.map((item) => (
+        {nav.map((item) => (
           <li class="border-b border-staff">
             <a href={item.href} class="block py-4 font-serif text-h3">
               {item.label}
@@ -108,7 +140,7 @@ import { site } from '../data/site';
         href={site.phone.href}
         class="mt-8 flex h-13 items-center justify-center rounded-full bg-quink text-base/5 font-semibold text-paper"
       >
-        Call {site.phone.display}
+        {text.callNumber(site.phone.display)}
       </a>
     </nav>
   </div>

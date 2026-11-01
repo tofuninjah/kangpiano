@@ -44,6 +44,16 @@ describe('buildEmail', () => {
     expect(email.text).toContain('(none)');
   });
 
+  it('tags requests from the Korean page and asks for a Korean reply', () => {
+    const email = buildEmail(request, 'ko');
+    expect(email.subject).toBe('[한국어] Lesson request from Test Parent');
+    expect(email.text).toContain('Reply in Korean.');
+    expect(buildEmail(request, 'en').subject).toBe(
+      'Lesson request from Test Parent'
+    );
+    expect(buildEmail(request).text).not.toContain('Korean');
+  });
+
   it('replies to the visitor only when they gave an email', () => {
     expect(buildEmail(request).replyTo).toBe('parent@example.com');
     expect(

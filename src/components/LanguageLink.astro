@@ -1,0 +1,33 @@
+---
+// Links to this page in the other language(s): the same page when it's
+// translated, that language's home page otherwise. Each link is named in
+// its own language and marked with its lang, so screen readers switch voice
+// for it. The header and footer both use this, so they always agree.
+import {
+  LOCALES,
+  LOCALE_DETAILS,
+  languageLinkPath,
+  type Locale,
+} from '../lib/i18n';
+
+interface Props {
+  locale: Locale;
+  /** The page's path without its language prefix. */
+  path: string;
+  class?: string;
+}
+
+const { locale, path, class: className } = Astro.props;
+
+const links = LOCALES.filter((other) => other !== locale).map((other) => ({
+  href: languageLinkPath(path, other),
+  tag: LOCALE_DETAILS[other].tag,
+  name: LOCALE_DETAILS[other].name,
+}));
+---
+
+{links.map((link) => (
+  <a href={link.href} lang={link.tag} hreflang={link.tag} class={className}>
+    {link.name}
+  </a>
+))}

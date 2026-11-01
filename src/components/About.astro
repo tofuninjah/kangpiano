@@ -1,8 +1,16 @@
 ---
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
-import { about } from '../data/about';
+import { copy } from '../data/copy';
+import type { Locale } from '../lib/i18n';
 import WhyPiano from './WhyPiano.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const about = copy[locale].about;
 
 // No portrait exists yet. Adding src/assets/images/portrait.(jpg|png|webp)
 // switches to Paper's photo-and-text layout; until then the section is
@@ -33,7 +41,7 @@ const portrait = Object.values(portraits)[0]?.default;
           id="about-heading"
           class="text-label font-semibold text-pencil uppercase"
         >
-          About Hyejeong
+          {about.heading}
         </h2>
         <blockquote class="font-serif text-quote-sm font-light text-balance lg:text-quote">
           <p>
@@ -42,7 +50,7 @@ const portrait = Object.values(portraits)[0]?.default;
           </p>
         </blockquote>
         <p class="text-body">{about.bio}</p>
-        <WhyPiano />
+        <WhyPiano locale={locale} />
       </div>
     </div>
   ) : (
@@ -53,7 +61,7 @@ const portrait = Object.values(portraits)[0]?.default;
             id="about-heading"
             class="text-label font-semibold text-pencil uppercase"
           >
-            About Hyejeong
+            {about.heading}
           </h2>
           <blockquote class="font-serif text-quote-sm font-light text-balance lg:text-quote">
             <p>
@@ -66,7 +74,7 @@ const portrait = Object.values(portraits)[0]?.default;
       </div>
       {/* Below both columns so the opened text gets the full width. */}
       <div class="mt-10 md:mt-14">
-        <WhyPiano wide />
+        <WhyPiano locale={locale} wide />
       </div>
     </>
   )}

@@ -4,17 +4,21 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 import config from '../astro.config.mjs';
+import { copy } from '../src/data/copy';
 import { site } from '../src/data/site';
+import { LOCALES } from '../src/lib/i18n';
 import { allTowns } from '../src/lib/schedule';
 import {
   localBusinessJsonLd,
   toJsonLdScript,
 } from '../src/lib/structured-data';
 import IndexPage from '../src/pages/index.astro';
+import KoreanIndexPage from '../src/pages/ko/index.astro';
 import RequestSent from '../src/pages/request-sent.astro';
 
 const siteUrl = config.site!;
 let home: string;
+let koreanHome: string;
 let resultPage: string;
 
 beforeAll(async () => {
@@ -22,6 +26,9 @@ beforeAll(async () => {
     astroConfig: { site: siteUrl },
   });
   home = await container.renderToString(IndexPage);
+  koreanHome = await container.renderToString(KoreanIndexPage, {
+    request: new Request(`${siteUrl}/ko`),
+  });
   // The container renders at "/" unless told the page's URL.
   resultPage = await container.renderToString(RequestSent, {
     request: new Request(`${siteUrl}/request-sent`),
@@ -38,16 +45,43 @@ function jsonLd(html: string): unknown[] {
 
 describe('structured data', () => {
   it('lists exactly the schedule’s towns and the site phone, with no address', () => {
-    const data = localBusinessJsonLd();
-    expect(data.areaServed.map((place) => place.name)).toEqual(allTowns());
-    expect(data.telephone).toBe(site.phone.href.replace('tel:', ''));
-    expect(data).not.toHaveProperty('address');
-    expect(data).not.toHaveProperty('url');
+    for (const locale of LOCALES) {
+      const data = localBusinessJsonLd(locale);
+      expect(data.areaServed.map((place) => place.name)).toEqual(allTowns());
+      expect(data.telephone).toBe(site.phone.href.replace('tel:', ''));
+      expect(data).not.toHaveProperty('address');
+      expect(data).not.toHaveProperty('url');
+      expect(data).not.toHaveProperty('@id');
+    }
   });
 
-  it('is rendered once on the home page and nowhere else', () => {
-    expect(jsonLd(home)).toEqual([localBusinessJsonLd(`${siteUrl}/`)]);
+  it('is rendered once on each home page and nowhere else', () => {
+    expect(jsonLd(home)).toEqual([localBusinessJsonLd('en', siteUrl)]);
+    expect(jsonLd(koreanHome)).toEqual([localBusinessJsonLd('ko', siteUrl)]);
     expect(jsonLd(resultPage)).toEqual([]);
+  });
+
+  it('describes one business, in each page’s language', () => {
+    const en = localBusinessJsonLd('en', siteUrl);
+    const ko = localBusinessJsonLd('ko', siteUrl);
+    expect(en['@id']).toBe(`${siteUrl}/#business`);
+    expect(ko['@id']).toBe(en['@id']);
+    expect(en.url).toBe(`${siteUrl}/`);
+    expect(ko.url).toBe(`${siteUrl}/ko`);
+    for (const [data, locale] of [
+      [en, 'en'],
+      [ko, 'ko'],
+    ] as const) {
+      expect(data.name).toBe(copy[locale].meta.siteName);
+      expect(data.description).toBe(copy[locale].meta.description);
+      expect(data.knowsLanguage).toEqual(['en', 'ko']);
+    }
+    expect(en.founder).toEqual({ '@type': 'Person', name: site.name });
+    expect(ko.founder).toEqual({
+      '@type': 'Person',
+      name: copy.ko.name,
+      alternateName: site.name,
+    });
   });
 
   it('cannot close its script element early', () => {

@@ -1,7 +1,28 @@
 ---
+import { copy } from '../data/copy';
 import { site } from '../data/site';
-import { CONTACT_LIMITS, HONEYPOT_FIELD, townOptions } from '../lib/contact';
+import {
+  CONTACT_LIMITS,
+  HONEYPOT_FIELD,
+  LOCALE_FIELD,
+  OTHER_TOWN,
+  townOptions,
+} from '../lib/contact';
+import type { Locale } from '../lib/i18n';
 import FormField from './FormField.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const all = copy[locale];
+const text = all.contact;
+
+// Option values stay the English names the server checks against;
+// only the visible label is translated.
+const townLabel = (town: string) =>
+  town === OTHER_TOWN ? text.otherTown : all.townName(town);
 
 // Each control points at its hint (if any) and its error message slot.
 const describedBy = (id: string, hint = false) =>
@@ -19,20 +40,20 @@ const control =
   <div class="mx-auto flex max-w-page flex-col gap-10 px-5 py-16 md:px-12 md:py-24 lg:flex-row lg:gap-16 xl:gap-24 xl:px-24 xl:py-30">
     <div class="flex flex-col gap-6 lg:w-[22rem] lg:shrink-0 xl:w-[32.5rem]">
       <p class="text-label font-semibold text-pencil uppercase">
-        Request a first lesson
+        {text.eyebrow}
       </p>
       <h2
         id="contact-heading"
         class="font-serif text-h2-sm font-light lg:text-h2"
       >
-        Let’s find your <em class="whitespace-nowrap">first lesson.</em>
+        {text.heading.lead}{' '}
+        <em class="whitespace-nowrap">{text.heading.emphasis}</em>
       </h2>
-      <p class="text-body">
-        Calling is quickest. If it’s easier, send a short note and I’ll get back
-        to you.
-      </p>
+      <p class="text-body">{text.intro}</p>
       <div class="flex flex-col gap-1.5 pt-2">
-        <p class="text-label font-semibold text-pencil uppercase">Call</p>
+        <p class="text-label font-semibold text-pencil uppercase">
+          {text.callLabel}
+        </p>
         <a
           href={site.phone.href}
           class="font-serif text-h2-sm text-quink underline-offset-8 hover:underline lg:text-quote"
@@ -49,8 +70,9 @@ const control =
       aria-labelledby="contact-heading"
       data-contact-form
     >
+      <input type="hidden" name={LOCALE_FIELD} value={locale} />
       <div class="flex flex-col gap-5 md:flex-row">
-        <FormField id="contact-name" label="Your name" class="md:flex-1">
+        <FormField id="contact-name" label={text.name} class="md:flex-1">
           <input
             id="contact-name"
             name="name"
@@ -62,7 +84,7 @@ const control =
             class={control}
           />
         </FormField>
-        <FormField id="contact-reply" label="Phone or email" class="md:flex-1">
+        <FormField id="contact-reply" label={text.contact} class="md:flex-1">
           <input
             id="contact-reply"
             name="contact"
@@ -78,9 +100,9 @@ const control =
       <div class="flex flex-col gap-5 md:flex-row md:items-start">
         <FormField
           id="contact-age"
-          label="Student’s age"
-          optional
-          hint="For example, 7 or adult"
+          label={text.age}
+          optional={text.optional}
+          hint={text.ageHint}
           class="md:flex-1"
         >
           <input
@@ -92,7 +114,7 @@ const control =
             class={control}
           />
         </FormField>
-        <FormField id="contact-town" label="Town" class="md:flex-1">
+        <FormField id="contact-town" label={text.town} class="md:flex-1">
           <div class="relative">
             <select
               id="contact-town"
@@ -101,9 +123,9 @@ const control =
               aria-describedby={describedBy('contact-town')}
               class={`${control} appearance-none pr-10`}
             >
-              <option value="">Choose a town</option>
+              <option value="">{text.townPlaceholder}</option>
               {townOptions().map((town) => (
-                <option value={town}>{town}</option>
+                <option value={town}>{townLabel(town)}</option>
               ))}
             </select>
             <svg
@@ -124,7 +146,11 @@ const control =
         </FormField>
       </div>
 
-      <FormField id="contact-message" label="Anything I should know?" optional>
+      <FormField
+        id="contact-message"
+        label={text.message}
+        optional={text.optional}
+      >
         <textarea
           id="contact-message"
           name="message"
@@ -140,7 +166,7 @@ const control =
         aria-hidden="true"
         class="absolute -left-[9999px] h-px w-px overflow-hidden"
       >
-        <label for="contact-website">Leave this empty</label>
+        <label for="contact-website">{text.honeypot}</label>
         <input
           id="contact-website"
           name={HONEYPOT_FIELD}
@@ -155,9 +181,9 @@ const control =
           type="submit"
           class="rounded-full bg-quink px-[1.875rem] py-[1.125rem] text-ui font-semibold text-paper transition-colors hover:bg-ink sm:w-fit"
         >
-          Send request
+          {text.submit}
         </button>
-        <p class="text-small text-pencil">Used only to reply to you.</p>
+        <p class="text-small text-pencil">{text.privacyNote}</p>
       </div>
       <p
         id="contact-status"
@@ -170,11 +196,13 @@ const control =
 
 <script>
   // Progressive enhancement: without this script the form posts normally,
-  // the browser's own required checks run, and the post lands on
-  // /request-sent or /request-not-sent. With it, the fields are checked here
-  // first, with errors next to the fields instead of the browser's bubbles,
-  // and the request goes in the background.
-  import { CONTACT_MESSAGES, fieldError } from '../lib/contact';
+  // the browser's own required checks run, and the post lands on the
+  // result page for the form's language. With it, the fields are checked
+  // here first, with errors next to the fields instead of the browser's
+  // bubbles, and the request goes in the background. Every message is in
+  // the language of the form's hidden locale field.
+  import { CONTACT_MESSAGES, LOCALE_FIELD, fieldError } from '../lib/contact';
+  import { DEFAULT_LOCALE, isLocale } from '../lib/i18n';
 
   const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
   const status = document.getElementById('contact-status');
@@ -183,6 +211,11 @@ const control =
   );
 
   if (form && status && button) {
+    const localeField = form.elements.namedItem(LOCALE_FIELD);
+    const localeValue =
+      localeField instanceof HTMLInputElement ? localeField.value : '';
+    const locale = isLocale(localeValue) ? localeValue : DEFAULT_LOCALE;
+    const messages = CONTACT_MESSAGES[locale];
     // The script takes over from the browser's bubbles; the `required`
     // attributes stay for the no-JavaScript post.
     form.noValidate = true;
@@ -235,7 +268,7 @@ const control =
       const errors: Record<string, string> = {};
       for (const control of form.elements) {
         if (!isField(control) || !control.name) continue;
-        const message = fieldError(control.name, control.value);
+        const message = fieldError(control.name, control.value, locale);
         if (message) errors[control.name] = message;
       }
       return errors;
@@ -249,7 +282,7 @@ const control =
       const control = event.target;
       if (sending || !isField(control)) return;
       if (!control.hasAttribute('aria-invalid')) return;
-      setError(control, fieldError(control.name, control.value));
+      setError(control, fieldError(control.name, control.value, locale));
     });
 
     // After a first attempt, leaving a field that's still wrong flags it.
@@ -258,7 +291,7 @@ const control =
       const control = event.target;
       if (!attempted || sending || !isField(control)) return;
       if (!document.hasFocus()) return;
-      const message = fieldError(control.name, control.value);
+      const message = fieldError(control.name, control.value, locale);
       if (message) setError(control, message);
     });
 
@@ -271,7 +304,7 @@ const control =
 
       const errors = checkFields();
       if (Object.keys(errors).length > 0) {
-        setStatus(CONTACT_MESSAGES.checkFields, 'error');
+        setStatus(messages.checkFields, 'error');
         showErrors(errors);
         return;
       }
@@ -279,7 +312,7 @@ const control =
       sending = true;
       // aria-disabled rather than disabled, so focus stays on the button.
       button.setAttribute('aria-disabled', 'true');
-      button.textContent = 'Sending…';
+      button.textContent = messages.sending;
 
       try {
         const response = await fetch(form.action, {
@@ -296,13 +329,13 @@ const control =
         if (response.ok && result?.ok) {
           form.reset();
           attempted = false;
-          setStatus(CONTACT_MESSAGES.success, 'success');
+          setStatus(messages.success, 'success');
         } else {
-          setStatus(result?.message ?? CONTACT_MESSAGES.sendFailed, 'error');
+          setStatus(result?.message ?? messages.sendFailed, 'error');
           if (result?.errors) showErrors(result.errors);
         }
       } catch {
-        setStatus(CONTACT_MESSAGES.offline, 'error');
+        setStatus(messages.offline, 'error');
       } finally {
         sending = false;
         button.removeAttribute('aria-disabled');

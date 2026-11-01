@@ -2,12 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
   CONTACT_LIMITS,
+  FIELD_MESSAGES,
   fieldError,
   isEmail,
   isPhone,
   OTHER_TOWN,
 } from '../src/lib/contact';
-import { CONTACT_FIELDS, parseContact } from '../src/lib/contact-schema';
+import {
+  CONTACT_FIELDS,
+  fieldMessage,
+  parseContact,
+  parseLocale,
+} from '../src/lib/contact-schema';
+import { LOCALES } from '../src/lib/i18n';
 
 const valid = {
   name: 'Test Parent',
@@ -137,6 +144,48 @@ describe('isPhone', () => {
   });
 });
 
+describe('parseLocale', () => {
+  it('reads exactly one known locale', () => {
+    expect(parseLocale(form({ locale: 'ko' }))).toBe('ko');
+    expect(parseLocale(form({ locale: 'en' }))).toBe('en');
+  });
+
+  it('falls back to English for anything else', () => {
+    expect(parseLocale(form({}))).toBe('en');
+    for (const locale of ['KO', ' ko', 'ko-KR', 'fr', '', '/ko', '__proto__']) {
+      expect(parseLocale(form({ locale })), locale).toBe('en');
+    }
+    const twice = form({ locale: 'ko' });
+    twice.append('locale', 'ko');
+    expect(parseLocale(twice)).toBe('en');
+  });
+});
+
+describe('parseContact in Korean', () => {
+  it('words every field error in Korean', () => {
+    const empty = parseContact(form({}), 'ko');
+    expect(empty).toEqual({
+      ok: false,
+      errors: {
+        name: FIELD_MESSAGES.ko.name,
+        contact: FIELD_MESSAGES.ko.contact,
+        town: FIELD_MESSAGES.ko.town,
+      },
+    });
+    const wrong = parseContact(
+      form({ ...valid, contact: 'hello', name: 'x'.repeat(101) }),
+      'ko'
+    );
+    expect(wrong).toEqual({
+      ok: false,
+      errors: {
+        name: FIELD_MESSAGES.ko.tooLong,
+        contact: FIELD_MESSAGES.ko.contactFormat,
+      },
+    });
+  });
+});
+
 describe('isEmail', () => {
   it('is Zod’s own email check, so the browser and server agree', () => {
     // The boundaries the pattern encodes, so a change to Zod's default
@@ -192,20 +241,44 @@ describe('fieldError', () => {
     message: ['', 'Hello'],
   };
 
-  it('matches the server’s answer for every field it checks', () => {
-    for (const field of CONTACT_FIELDS) {
-      for (const value of cases[field]!) {
-        const result = parseContact(form({ ...valid, [field]: value }));
-        const server = result.ok ? undefined : result.errors[field];
-        expect(
-          fieldError(field, value),
-          `${field}: ${JSON.stringify(value)}`
-        ).toBe(server);
+  it('matches the server’s answer for every field it checks, in every language', () => {
+    for (const locale of LOCALES) {
+      for (const field of CONTACT_FIELDS) {
+        for (const value of cases[field]!) {
+          const result = parseContact(
+            form({ ...valid, [field]: value }),
+            locale
+          );
+          const server = result.ok ? undefined : result.errors[field];
+          expect(
+            fieldError(field, value, locale),
+            `${locale} ${field}: ${JSON.stringify(value)}`
+          ).toBe(server);
+        }
       }
     }
   });
 
   it('ignores fields it does not know about', () => {
     expect(fieldError('website', '')).toBeUndefined();
+  });
+});
+
+describe('fieldMessage', () => {
+  it('words each error code in the page’s language', () => {
+    for (const locale of LOCALES) {
+      expect(fieldMessage('town', locale)).toBe(FIELD_MESSAGES[locale].town);
+    }
+  });
+
+  it('flags the field with a generic message when a rule reports no code', () => {
+    // A future rule written as .max(n, 'Too long') instead of code('tooLong')
+    // must still highlight its field rather than vanish.
+    for (const locale of LOCALES) {
+      expect(fieldMessage('Too long', locale)).toBe(
+        FIELD_MESSAGES[locale].invalid
+      );
+    }
+    expect(fieldMessage('__proto__', 'en')).toBe(FIELD_MESSAGES.en.invalid);
   });
 });

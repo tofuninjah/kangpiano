@@ -1,12 +1,15 @@
 // Contact form markup: town options come from the schedule, every control
 // is labeled, required/optional and length limits match src/lib/contact.ts,
-// and the honeypot stays out of reach of people and assistive tech.
+// the honeypot stays out of reach of people and assistive tech, and the
+// Korean form labels everything in Korean while sending the same values.
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 import Contact from '../src/components/Contact.astro';
+import { copy } from '../src/data/copy';
 import {
   CONTACT_LIMITS,
   HONEYPOT_FIELD,
+  LOCALE_FIELD,
   OTHER_TOWN,
   townOptions,
 } from '../src/lib/contact';
@@ -28,11 +31,23 @@ function controls(html: string): Attrs[] {
   );
 }
 
+/** Controls a visitor sees: not the honeypot or the hidden locale field. */
+const visibleControls = (page: string) =>
+  controls(page).filter(
+    (control) => control.name !== HONEYPOT_FIELD && control.type !== 'hidden'
+  );
+
 let html: string;
+let korean: string;
 
 beforeAll(async () => {
   const container = await AstroContainer.create();
-  html = await container.renderToString(Contact);
+  html = await container.renderToString(Contact, {
+    props: { locale: 'en' },
+  });
+  korean = await container.renderToString(Contact, {
+    props: { locale: 'ko' },
+  });
 });
 
 describe('contact form', () => {
@@ -61,9 +76,7 @@ describe('contact form', () => {
     const labelled = new Set(
       [...html.matchAll(/<label\b[^>]*\bfor="([^"]+)"/g)].map((m) => m[1])
     );
-    const visible = controls(html).filter(
-      (control) => control.name !== HONEYPOT_FIELD
-    );
+    const visible = visibleControls(html);
     expect(visible.length).toBe(5);
     for (const control of visible) {
       expect(control.id, control.name).toBeTruthy();
@@ -89,9 +102,7 @@ describe('contact form', () => {
 
   it('ties every visible control to its error slot, and the age field to its hint', () => {
     const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
-    const visible = controls(html).filter(
-      (control) => control.name !== HONEYPOT_FIELD
-    );
+    const visible = visibleControls(html);
     for (const control of visible) {
       const refs = (control['aria-describedby'] ?? '').split(' ');
       expect(refs, control.name).toContain(`${control.id}-error`);
@@ -114,5 +125,62 @@ describe('contact form', () => {
     expect(honeypot.tabindex).toBe('-1');
     expect(honeypot.autocomplete).toBe('off');
     expect('required' in honeypot).toBe(false);
+  });
+});
+
+describe('the page language field', () => {
+  it('carries each form’s own language', () => {
+    for (const [page, locale] of [
+      [html, 'en'],
+      [korean, 'ko'],
+    ] as const) {
+      const field = controls(page).find((c) => c.name === LOCALE_FIELD)!;
+      expect(field, locale).toBeDefined();
+      expect(field.type).toBe('hidden');
+      expect(field.value).toBe(locale);
+    }
+  });
+});
+
+describe('Korean contact form', () => {
+  const text = copy.ko.contact;
+
+  it('sends the same town values, labeled in Hangul', () => {
+    const select = korean.match(/<select\b[\s\S]*?<\/select>/)![0];
+    const options = [
+      ...select.matchAll(/<option value="([^"]*)"[^>]*>([^<]*)<\/option>/g),
+    ].map((m) => ({ value: m[1], label: m[2]!.trim() }));
+    expect(options).toEqual([
+      { value: '', label: text.townPlaceholder },
+      ...allTowns().map((town) => ({
+        value: town,
+        label: copy.ko.townName(town),
+      })),
+      { value: OTHER_TOWN, label: text.otherTown },
+    ]);
+  });
+
+  it('labels every field in Korean, with the same controls as English', () => {
+    const labels = [
+      ...korean.matchAll(
+        /<label\b[^>]*\bfor="([^"]+)"[^>]*>([\s\S]*?)<\/label>/g
+      ),
+    ].map((m) =>
+      m[2]!
+        .replace(/<[^>]+>/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+    );
+    expect(labels).toEqual([
+      text.name,
+      text.contact,
+      `${text.age} (${text.optional})`,
+      text.town,
+      `${text.message} (${text.optional})`,
+      text.honeypot,
+    ]);
+    expect(visibleControls(korean).map((c) => c.name)).toEqual(
+      visibleControls(html).map((c) => c.name)
+    );
   });
 });

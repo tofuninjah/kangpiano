@@ -26,6 +26,3 @@ export const locations: readonly Location[] = [
   },
   { host: 'teacher', towns: ['Mililani'], days: ['Wednesday', 'Friday'] },
 ];
-
-export const scheduleNote =
-  'Lessons are by appointment. Call to find a time that fits your family’s week.';

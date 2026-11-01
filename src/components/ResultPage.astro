@@ -1,0 +1,25 @@
+---
+// A page a no-JavaScript form post lands on, in either language. Kept out
+// of search results; the handler picks it from RESULT_PAGES.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { copy } from '../data/copy';
+import type { Locale } from '../lib/i18n';
+import FormResult from './FormResult.astro';
+
+interface Props {
+  locale: Locale;
+  result: 'sent' | 'notSent';
+}
+
+const { locale, result } = Astro.props;
+const text = copy[locale].formResult[result];
+---
+
+<BaseLayout locale={locale} title={text.title} noindex>
+  <FormResult
+    locale={locale}
+    eyebrow={text.eyebrow}
+    heading={text.heading}
+    body={text.body}
+  />
+</BaseLayout>

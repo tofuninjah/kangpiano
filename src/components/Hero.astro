@@ -1,9 +1,17 @@
 ---
 import { Picture } from 'astro:assets';
 import heroImage from '../assets/images/hero-main.jpeg';
+import { copy } from '../data/copy';
 import { site } from '../data/site';
-import { teachingSentence } from '../lib/schedule';
+import type { Locale } from '../lib/i18n';
 // Stock photo until Hyejeong supplies one of herself teaching.
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const text = copy[locale];
 ---
 
 <section
@@ -12,17 +20,17 @@ import { teachingSentence } from '../lib/schedule';
 >
   <div class="flex flex-col gap-5 md:gap-8 lg:w-[34rem] lg:shrink-0 xl:w-[42.5rem] xl:gap-9">
     <p class="text-label font-semibold text-pencil uppercase">
-      Private lessons · Oʻahu · All ages
+      {text.hero.eyebrow}
     </p>
     <h1
       id="hero-heading"
       class="font-serif text-display-sm font-light md:max-w-[31rem] md:text-display-md lg:max-w-none lg:text-display-lg xl:text-display"
     >
-      Piano lessons in your living room,{' '}
-      <em class="whitespace-nowrap text-quink">or mine.</em>
+      {text.hero.heading.lead}{' '}
+      <em class="whitespace-nowrap text-quink">{text.hero.heading.emphasis}</em>
     </h1>
     <p class="max-w-[35rem] text-lead-sm md:text-lead" data-teaching>
-      {teachingSentence()}
+      {text.hero.teachingSentence}
     </p>
     <!-- Phones get these two actions from the sticky CallBar instead. -->
     <div class="hidden items-center gap-7 pt-2 md:flex">
@@ -30,20 +38,20 @@ import { teachingSentence } from '../lib/schedule';
         href={site.phone.href}
         class="rounded-full bg-quink px-[1.875rem] py-[1.125rem] text-ui font-semibold text-paper transition-colors hover:bg-ink"
       >
-        Call {site.phone.display}
+        {text.callNumber(site.phone.display)}
       </a>
       <a
         href="#contact"
         class="border-b-[1.5px] border-quink pb-1 text-ui font-semibold text-quink transition-colors hover:border-ink hover:text-ink"
       >
-        Request a first lesson <span aria-hidden="true">→</span>
+        {text.hero.requestLink} <span aria-hidden="true">→</span>
       </a>
     </div>
   </div>
 
   <Picture
     src={heroImage}
-    alt="Hands playing a piano keyboard in warm light."
+    alt={text.hero.imageAlt}
     formats={['avif', 'webp']}
     widths={[480, 800, 1200, 1600]}
     sizes="(min-width: 1440px) 488px, (min-width: 1280px) calc(100vw - 59.5rem), (min-width: 1024px) calc(100vw - 44rem), (min-width: 768px) calc(100vw - 6rem), calc(100vw - 2.5rem)"

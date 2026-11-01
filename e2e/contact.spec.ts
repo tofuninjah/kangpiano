@@ -1,6 +1,7 @@
 // The lesson request form with JavaScript: the fields are checked on the
 // page first, the request goes in the background and the answer shows on
-// the page.
+// the page, in the form's language.
+import { copy } from '../src/data/copy';
 import { site } from '../src/data/site';
 import {
   CONTACT_LIMITS,
@@ -25,7 +26,9 @@ test('sends a request and confirms it on the page', async ({ page }) => {
   await fillRequest(page);
   await contactForm(page).getByRole('button', { name: 'Send request' }).click();
 
-  await expect(page.getByRole('status')).toHaveText(CONTACT_MESSAGES.success);
+  await expect(page.getByRole('status')).toHaveText(
+    CONTACT_MESSAGES.en.success
+  );
   await expect(page.getByRole('status')).toContainText(site.phone.display);
   await expect(contactForm(page).getByLabel('Your name')).toHaveValue('');
 
@@ -53,16 +56,16 @@ test('checks the fields before sending and focuses the first problem', async ({
   const form = contactForm(page);
   const name = form.getByLabel('Your name');
   await expect(page.getByRole('status')).toHaveText(
-    CONTACT_MESSAGES.checkFields
+    CONTACT_MESSAGES.en.checkFields
   );
   await expect(name).toBeFocused();
   await expect(name).toHaveAttribute('aria-invalid', 'true');
-  await expect(name).toHaveAccessibleDescription(FIELD_MESSAGES.name);
+  await expect(name).toHaveAccessibleDescription(FIELD_MESSAGES.en.name);
   await expect(form.getByLabel('Phone or email')).toHaveAccessibleDescription(
-    FIELD_MESSAGES.contact
+    FIELD_MESSAGES.en.contact
   );
   await expect(form.getByLabel('Town')).toHaveAccessibleDescription(
-    FIELD_MESSAGES.town
+    FIELD_MESSAGES.en.town
   );
   // Optional fields are never flagged.
   await expect(form.getByLabel('Student’s age')).not.toHaveAttribute(
@@ -80,7 +83,9 @@ test('flags contact details that are neither phone nor email before sending', as
 
   const reply = contactForm(page).getByLabel('Phone or email');
   await expect(reply).toBeFocused();
-  await expect(reply).toHaveAccessibleDescription(FIELD_MESSAGES.contactFormat);
+  await expect(reply).toHaveAccessibleDescription(
+    FIELD_MESSAGES.en.contactFormat
+  );
   expect(endpoint.requests).toBe(0);
 });
 
@@ -102,7 +107,7 @@ test('after a first attempt, flags a field as soon as it is left wrong', async (
   await name.fill('');
   await name.blur();
   await expect(name).toHaveAttribute('aria-invalid', 'true');
-  await expect(name).toHaveAccessibleDescription(FIELD_MESSAGES.name);
+  await expect(name).toHaveAccessibleDescription(FIELD_MESSAGES.en.name);
 });
 
 test('shows server errors next to their fields and focuses the first', async ({
@@ -129,13 +134,13 @@ test('shows server errors next to their fields and focuses the first', async ({
   const town = contactForm(page).getByLabel('Town');
   const message = contactForm(page).getByLabel('Anything I should know?');
   await expect(page.getByRole('status')).toHaveText(
-    CONTACT_MESSAGES.checkFields
+    CONTACT_MESSAGES.en.checkFields
   );
   await expect(town).toBeFocused();
   await expect(town).toHaveAttribute('aria-invalid', 'true');
-  await expect(town).toHaveAccessibleDescription(FIELD_MESSAGES.town);
+  await expect(town).toHaveAccessibleDescription(FIELD_MESSAGES.en.town);
   await expect(message).toHaveAttribute('aria-invalid', 'true');
-  await expect(message).toHaveAccessibleDescription(FIELD_MESSAGES.tooLong);
+  await expect(message).toHaveAccessibleDescription(FIELD_MESSAGES.en.tooLong);
   expect(endpoint.sent).toHaveLength(0);
 
   // Errors only the server can judge clear on any edit.
@@ -151,9 +156,11 @@ test('keeps the message current while a flagged field is edited', async ({
   await contactForm(page).getByRole('button', { name: 'Send request' }).click();
 
   const reply = contactForm(page).getByLabel('Phone or email');
-  await expect(reply).toHaveAccessibleDescription(FIELD_MESSAGES.contact);
+  await expect(reply).toHaveAccessibleDescription(FIELD_MESSAGES.en.contact);
   await reply.fill('not sure');
-  await expect(reply).toHaveAccessibleDescription(FIELD_MESSAGES.contactFormat);
+  await expect(reply).toHaveAccessibleDescription(
+    FIELD_MESSAGES.en.contactFormat
+  );
   await reply.fill('ana@example.com');
   await expect(reply).not.toHaveAttribute('aria-invalid');
 });
@@ -176,7 +183,9 @@ test('ignores edits while a request is in flight, so the answer lands on a clean
   await name.blur();
   release();
 
-  await expect(page.getByRole('status')).toHaveText(CONTACT_MESSAGES.success);
+  await expect(page.getByRole('status')).toHaveText(
+    CONTACT_MESSAGES.en.success
+  );
   await expect(name).not.toHaveAttribute('aria-invalid');
   await expect(name).toHaveAccessibleDescription('');
 });
@@ -214,7 +223,9 @@ test('sends once while a request is in flight', async ({ page }) => {
   await contactForm(page).getByLabel('Your name').press('Enter');
   release();
 
-  await expect(page.getByRole('status')).toHaveText(CONTACT_MESSAGES.success);
+  await expect(page.getByRole('status')).toHaveText(
+    CONTACT_MESSAGES.en.success
+  );
   await expect(button).toHaveText('Send request');
   await expect(button).not.toHaveAttribute('aria-disabled');
   expect(endpoint.requests).toBe(1);
@@ -232,7 +243,7 @@ test('keeps the details and offers the phone when sending fails', async ({
   await contactForm(page).getByRole('button', { name: 'Send request' }).click();
 
   await expect(page.getByRole('status')).toHaveText(
-    CONTACT_MESSAGES.sendFailed
+    CONTACT_MESSAGES.en.sendFailed
   );
   await expect(contactForm(page).getByLabel('Your name')).toHaveValue(
     VALID_REQUEST.name
@@ -244,7 +255,9 @@ test('asks the visitor to wait after too many requests', async ({ page }) => {
   await fillRequest(page);
   await contactForm(page).getByRole('button', { name: 'Send request' }).click();
 
-  await expect(page.getByRole('status')).toHaveText(CONTACT_MESSAGES.tooMany);
+  await expect(page.getByRole('status')).toHaveText(
+    CONTACT_MESSAGES.en.tooMany
+  );
   expect(endpoint.sent).toHaveLength(0);
 });
 
@@ -255,8 +268,99 @@ test('explains a lost connection', async ({ page }) => {
   await fillRequest(page);
   await contactForm(page).getByRole('button', { name: 'Send request' }).click();
 
-  await expect(page.getByRole('status')).toHaveText(CONTACT_MESSAGES.offline);
+  await expect(page.getByRole('status')).toHaveText(
+    CONTACT_MESSAGES.en.offline
+  );
   await expect(contactForm(page).getByLabel('Your name')).toHaveValue(
     VALID_REQUEST.name
   );
+});
+
+test.describe('on the Korean page', () => {
+  const ko = copy.ko.contact;
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/ko#contact');
+  });
+
+  test('sends a request, confirms it in Korean and tags the email', async ({
+    page,
+  }) => {
+    const endpoint = await serveContact(page);
+    await fillRequest(page, {}, 'ko');
+    await contactForm(page, 'ko')
+      .getByRole('button', { name: ko.submit })
+      .click();
+
+    await expect(page.getByRole('status')).toHaveText(
+      CONTACT_MESSAGES.ko.success
+    );
+    expect(endpoint.sent).toHaveLength(1);
+    expect(endpoint.sent[0]!.subject).toBe(
+      `[한국어] Lesson request from ${VALID_REQUEST.name}`
+    );
+    expect(endpoint.sent[0]!.text).toContain(`Town: ${VALID_REQUEST.town}`);
+  });
+
+  test('checks the fields in Korean before sending', async ({ page }) => {
+    const endpoint = await serveContact(page);
+    await fillRequest(page, { name: '   ', contact: 'not sure' }, 'ko');
+    await contactForm(page, 'ko')
+      .getByRole('button', { name: ko.submit })
+      .click();
+
+    const name = contactForm(page, 'ko').getByLabel(ko.name);
+    await expect(page.getByRole('status')).toHaveText(
+      CONTACT_MESSAGES.ko.checkFields
+    );
+    await expect(name).toBeFocused();
+    await expect(name).toHaveAccessibleDescription(FIELD_MESSAGES.ko.name);
+    await expect(
+      contactForm(page, 'ko').getByLabel(ko.contact)
+    ).toHaveAccessibleDescription(FIELD_MESSAGES.ko.contactFormat);
+    expect(endpoint.requests).toBe(0);
+  });
+
+  test('shows server errors in Korean next to their fields', async ({
+    page,
+  }) => {
+    const endpoint = await serveContact(page);
+    await fillRequest(page, {}, 'ko');
+    // Only the server judges the town list, so the page is tampered with.
+    await contactForm(page, 'ko')
+      .getByLabel(ko.town)
+      .evaluate((select: HTMLSelectElement) => {
+        select.add(new Option('Honolulu'));
+        select.value = 'Honolulu';
+      });
+    await contactForm(page, 'ko')
+      .getByRole('button', { name: ko.submit })
+      .click();
+
+    const town = contactForm(page, 'ko').getByLabel(ko.town);
+    await expect(page.getByRole('status')).toHaveText(
+      CONTACT_MESSAGES.ko.checkFields
+    );
+    await expect(town).toBeFocused();
+    await expect(town).toHaveAccessibleDescription(FIELD_MESSAGES.ko.town);
+    expect(endpoint.requests).toBe(1);
+    expect(endpoint.sent).toHaveLength(0);
+  });
+
+  test('offers the phone in Korean when sending fails', async ({ page }) => {
+    await serveContact(page, {
+      send: async () => {
+        throw new Error('Resend rejected the email: test');
+      },
+    });
+    await fillRequest(page, {}, 'ko');
+    await contactForm(page, 'ko')
+      .getByRole('button', { name: ko.submit })
+      .click();
+
+    await expect(page.getByRole('status')).toHaveText(
+      CONTACT_MESSAGES.ko.sendFailed
+    );
+    await expect(page.getByRole('status')).toContainText(site.phone.display);
+  });
 });

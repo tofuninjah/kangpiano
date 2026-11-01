@@ -11,7 +11,14 @@ import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import CallBar from '../components/CallBar.astro';
-import { site } from '../data/site';
+import { copy } from '../data/copy';
+import {
+  DEFAULT_LOCALE,
+  LOCALE_DETAILS,
+  alternatePaths,
+  unlocalizePath,
+  type Locale,
+} from '../lib/i18n';
 import { toJsonLdScript } from '../lib/structured-data';
 
 interface Props {
@@ -21,24 +28,52 @@ interface Props {
   noindex?: boolean;
   /** schema.org data rendered as JSON-LD (the home page passes it). */
   structuredData?: unknown;
+  /** The page's language; pages under /ko pass 'ko'. */
+  locale?: Locale;
 }
 
+const { locale = DEFAULT_LOCALE } = Astro.props;
+const text = copy[locale];
 const {
-  title = site.title,
-  description = site.description,
+  title = text.meta.title,
+  description = text.meta.description,
   noindex = false,
   structuredData,
 } = Astro.props;
+
+const { tag, og } = LOCALE_DETAILS[locale];
+// The page's path without its language prefix, shared by every language.
+const path = unlocalizePath(Astro.url.pathname);
+const alternates = alternatePaths(path);
 
 // Absolute URLs need `site`, which waits on the domain; until then these
 // tags are simply left out.
 const canonical = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
   : undefined;
+// hreflang: each translated page lists every language, itself included,
+// and sends everyone else to English.
+const hreflangs = Astro.site
+  ? [
+      ...alternates.map((alternate) => ({
+        hreflang: LOCALE_DETAILS[alternate.locale].tag,
+        href: new URL(alternate.path, Astro.site).href,
+      })),
+      ...alternates
+        .filter((alternate) => alternate.locale === DEFAULT_LOCALE)
+        .map((alternate) => ({
+          hreflang: 'x-default',
+          href: new URL(alternate.path, Astro.site).href,
+        })),
+    ]
+  : [];
+const ogAlternates = alternates
+  .filter((alternate) => alternate.locale !== locale)
+  .map((alternate) => LOCALE_DETAILS[alternate.locale].og);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={tag}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -47,14 +82,20 @@ const canonical = Astro.site
     <meta name="theme-color" content="#f4f1ea" />
     {noindex && <meta name="robots" content="noindex" />}
     {canonical && <link rel="canonical" href={canonical} />}
+    {hreflangs.map((link) => (
+      <link rel="alternate" hreflang={link.hreflang} href={link.href} />
+    ))}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content={site.title} />
+    <meta property="og:site_name" content={text.meta.siteName} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale" content={og} />
+    {ogAlternates.map((alternate) => (
+      <meta property="og:locale:alternate" content={alternate} />
+    ))}
     {canonical && <meta property="og:url" content={canonical} />}
     <meta name="twitter:card" content="summary" />
     {structuredData !== undefined && (
@@ -79,13 +120,13 @@ const canonical = Astro.site
       href="#main"
       class="sr-only rounded-full bg-quink text-ui font-semibold text-paper focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-5 focus:py-3"
     >
-      Skip to content
+      {text.skipLink}
     </a>
-    <Header />
+    <Header locale={locale} path={path} />
     <main id="main" tabindex="-1" class="flex-1 focus:outline-none">
       <slot />
     </main>
-    <Footer />
-    <CallBar />
+    <Footer locale={locale} path={path} />
+    <CallBar locale={locale} />
   </body>
 </html>

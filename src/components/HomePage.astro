@@ -1,0 +1,32 @@
+---
+// The home page, shared by / and /ko so both languages keep the same
+// sections in the same order. Each page file passes its locale.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from './Hero.astro';
+import Credentials from './Credentials.astro';
+import Schedule from './Schedule.astro';
+import Lessons from './Lessons.astro';
+import About from './About.astro';
+import Contact from './Contact.astro';
+import type { Locale } from '../lib/i18n';
+import { localBusinessJsonLd } from '../lib/structured-data';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+// Each home page describes the business in its own language; the shared
+// @id tells search engines it's the same business.
+const structuredData = localBusinessJsonLd(locale, Astro.site?.href);
+---
+
+<BaseLayout locale={locale} structuredData={structuredData}>
+  <Hero locale={locale} />
+  <Credentials locale={locale} />
+  <Schedule locale={locale} />
+  <Lessons locale={locale} />
+  <About locale={locale} />
+  <Contact locale={locale} />
+</BaseLayout>

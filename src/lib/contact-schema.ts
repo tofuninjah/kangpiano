@@ -1,14 +1,18 @@
 // Server-side validation for the contact form. Field names, limits, messages
 // and the phone/email checks come from ./contact, so the form markup, the
-// browser script and this schema can't drift apart.
+// browser script and this schema can't drift apart. Errors are codes
+// (FieldErrorCode), worded per language in FIELD_MESSAGES.
 import { z } from 'zod';
 import {
   CONTACT_LIMITS,
   FIELD_MESSAGES,
+  LOCALE_FIELD,
   isEmail,
   isPhone,
   townOptions,
+  type FieldErrorCode,
 } from './contact';
+import { DEFAULT_LOCALE, isLocale, type Locale } from './i18n';
 
 /** The fields the endpoint accepts. Anything else in the body is ignored. */
 export const CONTACT_FIELDS = [
@@ -41,23 +45,25 @@ const multiLine = (value: string) =>
     .replace(CONTROL_EXCEPT_NEWLINE_TAB, '')
     .trim();
 
+const code = (value: FieldErrorCode) => value;
+
 const text = (max: number, clean: (value: string) => string) =>
-  z.string().transform(clean).pipe(z.string().max(max, FIELD_MESSAGES.tooLong));
+  z
+    .string()
+    .transform(clean)
+    .pipe(z.string().max(max, code('tooLong')));
 
 export const contactSchema = z.object({
   name: text(CONTACT_LIMITS.name, singleLine).pipe(
-    z.string().min(1, FIELD_MESSAGES.name)
+    z.string().min(1, code('name'))
   ),
   contact: text(CONTACT_LIMITS.contact, singleLine)
-    .pipe(z.string().min(1, FIELD_MESSAGES.contact))
-    .refine(
-      (value) => isEmail(value) || isPhone(value),
-      FIELD_MESSAGES.contactFormat
-    ),
+    .pipe(z.string().min(1, code('contact')))
+    .refine((value) => isEmail(value) || isPhone(value), code('contactFormat')),
   age: text(CONTACT_LIMITS.age, singleLine),
   town: text(100, singleLine).refine(
     (value) => townOptions().includes(value),
-    FIELD_MESSAGES.town
+    code('town')
   ),
   message: text(CONTACT_LIMITS.message, multiLine),
 });
@@ -66,13 +72,46 @@ export type ContactRequest = z.infer<typeof contactSchema>;
 
 export type ContactErrors = Partial<Record<ContactField, string>>;
 
+interface FormValues {
+  get(name: string): FormDataEntryValue | null;
+  getAll(name: string): FormDataEntryValue[];
+}
+
+/**
+ * The page's language from the hidden locale field: exactly one value, and
+ * one of the known locales. Anything else is English rather than an error,
+ * so a mangled field never costs Hyejeong a real request. The value only
+ * ever picks from fixed lists; it's never echoed into a URL, page or email.
+ */
+export function parseLocale(form: FormValues): Locale {
+  const values = form.getAll(LOCALE_FIELD);
+  const [value] = values;
+  return values.length === 1 && typeof value === 'string' && isLocale(value)
+    ? value
+    : DEFAULT_LOCALE;
+}
+
+/**
+ * The visitor-facing wording for a schema issue. Every rule reports a
+ * FieldErrorCode; anything else (a rule written with a plain message)
+ * still gets a generic message, so its field is highlighted rather than
+ * dropped, and no raw rule text reaches the visitor.
+ */
+export function fieldMessage(issue: string, locale: Locale): string {
+  const messages = FIELD_MESSAGES[locale];
+  return Object.hasOwn(messages, issue)
+    ? messages[issue as FieldErrorCode]
+    : messages.invalid;
+}
+
 /**
  * Validates the allowlisted fields only. Missing fields count as empty, so
- * the required-field messages apply.
+ * the required-field messages apply. Errors are worded in `locale`.
  */
-export function parseContact(form: {
-  get(name: string): FormDataEntryValue | null;
-}): { ok: true; data: ContactRequest } | { ok: false; errors: ContactErrors } {
+export function parseContact(
+  form: FormValues,
+  locale: Locale = DEFAULT_LOCALE
+): { ok: true; data: ContactRequest } | { ok: false; errors: ContactErrors } {
   const input = Object.fromEntries(
     CONTACT_FIELDS.map((field) => {
       const value = form.get(field);
@@ -85,7 +124,7 @@ export function parseContact(form: {
   const errors: ContactErrors = {};
   for (const issue of result.error.issues) {
     const field = issue.path[0] as ContactField;
-    errors[field] ??= issue.message;
+    errors[field] ??= fieldMessage(issue.message, locale);
   }
   return { ok: false, errors };
 }

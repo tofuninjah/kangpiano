@@ -1,5 +1,7 @@
-// Getting around the page: skip link, phone menu and the phone call bar.
+// Getting around the page: skip link, phone menu, the phone call bar and
+// the link between the English and Korean pages.
 import type { Page } from '@playwright/test';
+import { copy } from '../src/data/copy';
 import { site } from '../src/data/site';
 import { expect, test } from './test';
 
@@ -156,6 +158,121 @@ test.describe('from a form result page', () => {
     await expect(page).toHaveURL('/#lessons');
     await expect(
       page.getByRole('heading', { name: /Lessons shaped around/ })
+    ).toBeInViewport();
+  });
+});
+
+// Visible at every width, so it runs on both projects.
+test.describe('language link', () => {
+  test('goes from the English page to the Korean page and back', async ({
+    page,
+  }) => {
+    await page
+      .getByRole('banner')
+      .getByRole('link', { name: '한국어', exact: true })
+      .click();
+    await expect(page).toHaveURL('/ko');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ko');
+
+    await page
+      .getByRole('banner')
+      .getByRole('link', { name: 'English', exact: true })
+      .click();
+    await expect(page).toHaveURL('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  });
+});
+
+test('footer links are 44px tall on phones', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'The 44px minimum applies below 768px');
+  const heights = await page
+    .getByRole('contentinfo')
+    .getByRole('link')
+    .evaluateAll((links) =>
+      links.map((link) => link.getBoundingClientRect().height)
+    );
+  expect(heights.length).toBe(2);
+  for (const height of heights) expect(height).toBeGreaterThanOrEqual(44);
+});
+
+test('on desktop the language link looks unlike the section links', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'The section links show from 1024px');
+  const color = (locator: ReturnType<Page['locator']>) =>
+    locator.evaluate((el) => getComputedStyle(el).color);
+  const section = page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Lessons' });
+  const language = page
+    .getByRole('banner')
+    .getByRole('link', { name: '한국어', exact: true });
+  expect(await color(language)).not.toBe(await color(section));
+});
+
+test('the footer links to the other language too', async ({ page }) => {
+  await page
+    .getByRole('contentinfo')
+    .getByRole('link', { name: '한국어', exact: true })
+    .click();
+  await expect(page).toHaveURL('/ko');
+  await expect(
+    page.getByRole('contentinfo').getByRole('link', { name: 'English' })
+  ).toHaveAttribute('href', '/');
+});
+
+test.describe('Korean page', () => {
+  const ko = copy.ko;
+  const nav = (page: Page) =>
+    page.getByRole('navigation', { name: ko.header.navLabel });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/ko');
+  });
+
+  test('the call bar leads to the form on the Korean page', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'The call bar is for phones');
+    await expect(
+      page.getByRole('link', {
+        name: ko.callBar.callNowLabel(site.phone.display),
+      })
+    ).toHaveAttribute('href', site.phone.href);
+    await page
+      .getByRole('link', { name: ko.callBar.request, exact: true })
+      .click();
+
+    await expect(page).toHaveURL('/ko#contact');
+    await expect(page.locator('#contact')).toBeInViewport();
+  });
+
+  test('the main nav stays on the Korean page', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Checks the desktop nav');
+    await nav(page).getByRole('link', { name: ko.header.nav.lessons }).click();
+
+    await expect(page).toHaveURL('/ko#lessons');
+    await expect(
+      page.getByRole('heading', { name: new RegExp(ko.lessons.heading.lead) })
+    ).toBeInViewport();
+  });
+
+  test('the phone menu opens, links in Korean and closes', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'The menu button shows below 1024px');
+    await page
+      .getByRole('button', { name: ko.header.menu, exact: true })
+      .click();
+    await nav(page).getByRole('link', { name: ko.header.nav.about }).click();
+
+    await expect(nav(page)).toBeHidden();
+    await expect(page).toHaveURL('/ko#about');
+    await expect(
+      page.getByRole('heading', { name: ko.about.heading })
     ).toBeInViewport();
   });
 });

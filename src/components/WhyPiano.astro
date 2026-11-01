@@ -1,17 +1,20 @@
 ---
-import { about } from '../data/about';
+import { copy } from '../data/copy';
+import type { Locale } from '../lib/i18n';
 
 interface Props {
+  locale: Locale;
   /** Full-width placement: set the text in two columns from 1024px. */
   wide?: boolean;
 }
 
-const { wide = false } = Astro.props;
+const { locale, wide = false } = Astro.props;
+const about = copy[locale].about;
 ---
 
 <details class="group border-t border-staff pt-6">
   <summary class="flex w-fit cursor-pointer list-none items-center gap-3 text-base/5 font-semibold text-quink [&::-webkit-details-marker]:hidden">
-    <span class="border-b-[1.5px] border-current pb-1">Why learn piano?</span>
+    <span class="border-b-[1.5px] border-current pb-1">{about.whyTitle}</span>
     <svg
       aria-hidden="true"
       width="14"
@@ -30,8 +33,13 @@ const { wide = false } = Astro.props;
     ]}
     data-why-piano
   >
-    {about.whyPiano.map((paragraph) => (
-      <p>{paragraph}</p>
+    {about.why.map((point) => (
+      <p>
+        {point.lead && (
+          <strong class="block font-semibold">{point.lead}</strong>
+        )}
+        {point.text}
+      </p>
     ))}
   </div>
 </details>
